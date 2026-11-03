@@ -234,11 +234,11 @@ func (r memberRepo) Delete(ctx context.Context, id string) error {
 type payoutRepo struct{ db *gorm.DB }
 
 func toPayout(m *payoutAccountModel) d.PayoutAccount {
-	return d.PayoutAccount{ID: m.ID, MemberID: m.MemberID, Kind: d.PayoutKind(m.Kind), Number: m.Number, BankName: m.BankName, IsMain: m.IsMain, CreatedAt: m.CreatedAt}
+	return d.PayoutAccount{ID: m.ID, MemberID: m.MemberID, Kind: d.PayoutKind(m.Kind), Number: m.Number, BankName: m.BankName, Holder: m.Holder, IsMain: m.IsMain, CreatedAt: m.CreatedAt}
 }
 
 func (r payoutRepo) Create(ctx context.Context, p *d.PayoutAccount) error {
-	return mapErr(r.db.WithContext(ctx).Create(&payoutAccountModel{ID: p.ID, MemberID: p.MemberID, Kind: string(p.Kind), Number: p.Number, BankName: p.BankName, IsMain: p.IsMain, CreatedAt: p.CreatedAt}).Error)
+	return mapErr(r.db.WithContext(ctx).Create(&payoutAccountModel{ID: p.ID, MemberID: p.MemberID, Kind: string(p.Kind), Number: p.Number, BankName: p.BankName, Holder: p.Holder, IsMain: p.IsMain, CreatedAt: p.CreatedAt}).Error)
 }
 
 func (r payoutRepo) ByID(ctx context.Context, id string) (*d.PayoutAccount, error) {
@@ -433,13 +433,13 @@ type withdrawalRepo struct{ db *gorm.DB }
 
 func toWithdrawal(m *withdrawalModel) d.Withdrawal {
 	return d.Withdrawal{ID: m.ID, Number: m.Number, AccountID: m.AccountID, MemberID: m.MemberID, Amount: d.Money(m.Amount), DestKind: d.PayoutKind(m.DestKind),
-		DestNumber: m.DestNumber, DestBank: m.DestBank, Status: d.WithdrawalStatus(m.Status), Reason: m.Reason, Note: m.Note, TransferRef: m.TransferRef,
+		DestNumber: m.DestNumber, DestBank: m.DestBank, DestHolder: m.DestHolder, Status: d.WithdrawalStatus(m.Status), Reason: m.Reason, Note: m.Note, TransferRef: m.TransferRef,
 		DueAt: m.DueAt, DecidedAt: m.DecidedAt, PaidAt: m.PaidAt, DecidedBy: m.DecidedBy, CreatedAt: m.CreatedAt}
 }
 
 func (r withdrawalRepo) Create(ctx context.Context, w *d.Withdrawal) error {
 	m := &withdrawalModel{ID: w.ID, AccountID: w.AccountID, MemberID: w.MemberID, Amount: int64(w.Amount), DestKind: string(w.DestKind), DestNumber: w.DestNumber,
-		DestBank: w.DestBank, Status: string(w.Status), DueAt: w.DueAt, CreatedAt: w.CreatedAt}
+		DestBank: w.DestBank, DestHolder: w.DestHolder, Status: string(w.Status), DueAt: w.DueAt, CreatedAt: w.CreatedAt}
 	if err := r.db.WithContext(ctx).Omit("number").Clauses(clause.Returning{Columns: []clause.Column{{Name: "number"}}}).Create(m).Error; err != nil {
 		return mapErr(err)
 	}

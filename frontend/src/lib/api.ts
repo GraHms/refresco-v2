@@ -62,6 +62,6 @@ export interface MemberView { id: string; name: string; role: string; pct: numbe
 
 export interface WithdrawalView {
   id: string; code: string; member_id: string; member_name: string; amount: Money; dest_kind: 'mpesa' | 'emola' | 'nib';
-  dest_number: string; dest_bank?: string; status: 'requested' | 'approved' | 'paid' | 'rejected'; reason?: string; note?: string;
+  dest_number: string; dest_bank?: string; dest_holder?: string; status: 'requested' | 'approved' | 'paid' | 'rejected'; reason?: string; note?: string;
   transfer_ref?: string; due_at: string; decided_at?: string; paid_at?: string; created_at: string;
 }

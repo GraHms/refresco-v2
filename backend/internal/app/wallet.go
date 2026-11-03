@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	d "github.com/refresco/refresco-v2/backend/internal/domain"
 	"github.com/refresco/refresco-v2/backend/internal/ports"
@@ -14,6 +15,7 @@ type PayoutAccountView struct {
 	Kind   d.PayoutKind `json:"kind"`
 	Number string       `json:"number"`
 	Bank   string       `json:"bank,omitempty"`
+	Holder string       `json:"holder,omitempty"`
 	IsMain bool         `json:"is_main"`
 }
 
@@ -26,6 +28,7 @@ type WithdrawalView struct {
 	DestKind    d.PayoutKind       `json:"dest_kind"`
 	DestNumber  string             `json:"dest_number"`
 	DestBank    string             `json:"dest_bank,omitempty"`
+	DestHolder  string             `json:"dest_holder,omitempty"`
 	Status      d.WithdrawalStatus `json:"status"`
 	Reason      string             `json:"reason,omitempty"`
 	Note        string             `json:"note,omitempty"`
@@ -37,7 +40,7 @@ type WithdrawalView struct {
 }
 
 func payoutView(p d.PayoutAccount) PayoutAccountView {
-	return PayoutAccountView{ID: p.ID, Kind: p.Kind, Number: maskDest(p.Kind, p.Number, false), Bank: p.BankName, IsMain: p.IsMain}
+	return PayoutAccountView{ID: p.ID, Kind: p.Kind, Number: maskDest(p.Kind, p.Number, false), Bank: p.BankName, Holder: p.Holder, IsMain: p.IsMain}
 }
 
 func maskDest(k d.PayoutKind, num string, full bool) string {
@@ -63,7 +66,7 @@ func groupNIB(n string) string {
 
 func withdrawalView(w d.Withdrawal, name string, full bool) WithdrawalView {
 	return WithdrawalView{ID: w.ID, Code: w.Code(), MemberID: w.MemberID, MemberName: name, Amount: w.Amount, DestKind: w.DestKind,
-		DestNumber: maskDest(w.DestKind, w.DestNumber, full), DestBank: w.DestBank, Status: w.Status, Reason: w.Reason, Note: w.Note,
+		DestNumber: maskDest(w.DestKind, w.DestNumber, full), DestBank: w.DestBank, DestHolder: w.DestHolder, Status: w.Status, Reason: w.Reason, Note: w.Note,
 		TransferRef: w.TransferRef, DueAt: w.DueAt, DecidedAt: w.DecidedAt, PaidAt: w.PaidAt, CreatedAt: w.CreatedAt}
 }
 
@@ -151,6 +154,7 @@ type PayoutAccountInput struct {
 	Kind   d.PayoutKind `json:"kind"`
 	Number string       `json:"number"`
 	Bank   string       `json:"bank"`
+	Holder string       `json:"holder"`
 	IsMain bool         `json:"is_main"`
 }
 
@@ -173,7 +177,11 @@ func (a *App) AddPayoutAccount(ctx context.Context, c *Creator, in PayoutAccount
 		if !banks[in.Bank] {
 			return nil, d.Invalid("invalid_bank", "Escolhe o banco.")
 		}
-		p.Number, p.BankName = n, in.Bank
+		holder := strings.Join(strings.Fields(in.Holder), " ")
+		if l := utf8.RuneCountInString(holder); l < 3 || l > 80 {
+			return nil, d.Invalid("invalid_holder", "Escreve o nome do titular da conta.")
+		}
+		p.Number, p.BankName, p.Holder = n, in.Bank, holder
 	default:
 		return nil, d.Invalid("invalid_kind", "Tipo de conta inválido.")
 	}
@@ -230,7 +238,7 @@ func (a *App) RequestWithdrawal(ctx context.Context, c *Creator, amount d.Money,
 		return nil, d.Invalid("invalid_destination", "Escolhe a conta de destino.")
 	}
 	now := a.now()
-	w := &d.Withdrawal{ID: newID(), AccountID: c.Account.ID, MemberID: c.Member.ID, Amount: amount, DestKind: p.Kind, DestNumber: p.Number, DestBank: p.BankName,
+	w := &d.Withdrawal{ID: newID(), AccountID: c.Account.ID, MemberID: c.Member.ID, Amount: amount, DestKind: p.Kind, DestNumber: p.Number, DestBank: p.BankName, DestHolder: p.Holder,
 		Status: d.WithdrawalRequested, DueAt: now.Add(d.WithdrawalSLA), CreatedAt: now}
 	err = a.Store.Tx(ctx, func(s ports.Store) error {
 		acc, err := s.Accounts().ByID(ctx, c.Account.ID)

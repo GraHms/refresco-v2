@@ -268,3 +268,30 @@ type TokenIssuer interface {
 }
 
 type Clock interface{ Now() time.Time }
+
+// PaymentOrder is everything an operator needs to execute one withdrawal by hand.
+type PaymentOrder struct {
+	Code          string
+	Status        d.WithdrawalStatus
+	Amount        d.Money
+	Beneficiary   string
+	MemberName    string
+	MemberRole    string
+	MemberPhone   string
+	AccountName   string
+	AccountHandle string
+	AccountStatus d.AccountStatus
+	DestKind      d.PayoutKind
+	DestNumber    string
+	DestBank      string
+	RequestedAt   time.Time
+	DueAt         time.Time
+	ApprovedAt    *time.Time
+	PaidAt        *time.Time
+	TransferRef   string
+	Reason        string
+}
+
+type DocumentRenderer interface {
+	PaymentOrders(orders []PaymentOrder, generatedBy string, at time.Time) ([]byte, error)
+}

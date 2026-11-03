@@ -73,6 +73,7 @@ type payoutAccountModel struct {
 	Kind      string `gorm:"size:10;not null"`
 	Number    string `gorm:"size:32;not null"`
 	BankName  string `gorm:"size:40;not null;default:''"`
+	Holder    string `gorm:"size:80;not null;default:''"`
 	IsMain    bool   `gorm:"not null"`
 	CreatedAt time.Time
 }
@@ -129,6 +130,7 @@ type withdrawalModel struct {
 	DestKind    string `gorm:"size:10;not null"`
 	DestNumber  string `gorm:"size:32;not null"`
 	DestBank    string `gorm:"size:40;not null;default:''"`
+	DestHolder  string `gorm:"size:80;not null;default:''"`
 	Status      string `gorm:"size:12;not null;index"`
 	Reason      string `gorm:"size:80;not null;default:''"`
 	Note        string `gorm:"size:1200;not null;default:''"`

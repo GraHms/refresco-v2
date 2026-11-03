@@ -56,4 +56,4 @@ Put a TLS terminating load balancer in front of `web`. The API refuses to start 
 
 ## API
 
-All routes are under `/api/v1`. Public: `pages/:handle`, `pages/:handle/supports`, `supports/:id` (+ `/otp`, `/resend`, `/cancel`), `auth/*`, `handles/:handle`, `split-approvals/:token`. Creator: `backoffice/*` (overview, supports + CSV, page, group, wallet). Super admin: `admin/*` (dashboard, accounts, fee, status, withdrawals, invites). Amounts are integers in centavos.
+All routes are under `/api/v1`. Public: `pages/:handle`, `pages/:handle/supports`, `supports/:id` (+ `/otp`, `/resend`, `/cancel`), `auth/*`, `handles/:handle`, `split-approvals/:token`. Creator: `backoffice/*` (overview, supports + CSV, page, group, wallet). Super admin: `admin/*` (dashboard, accounts, fee, status, withdrawals with detail and PDF payment orders at `withdrawals/:id/pdf` and `withdrawals.pdf?status=approved`, invites). Amounts are integers in centavos.

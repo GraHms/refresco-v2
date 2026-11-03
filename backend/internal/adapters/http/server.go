@@ -118,6 +118,9 @@ func New(a *app.App, l *slog.Logger, o Options) (*gin.Engine, error) {
 		ad.PUT("/accounts/:id/fee", s.adminFee)
 		ad.PUT("/accounts/:id/status", s.adminStatus)
 		ad.GET("/withdrawals", s.adminWithdrawals)
+		ad.GET("/withdrawals.pdf", s.adminWithdrawalsPDF)
+		ad.GET("/withdrawals/:id", s.adminWithdrawal)
+		ad.GET("/withdrawals/:id/pdf", s.adminWithdrawalPDF)
 		ad.POST("/withdrawals/:id/actions", s.adminWithdrawalAction)
 		ad.GET("/invites", s.adminInvites)
 		ad.POST("/invites", s.adminCreateInvite)
@@ -907,4 +910,41 @@ func (s *Server) adminRevokeInvite(c *gin.Context) {
 		return
 	}
 	c.Status(http.StatusNoContent)
+}
+
+func (s *Server) adminWithdrawal(c *gin.Context) {
+	id, ok := s.idParam(c)
+	if !ok {
+		return
+	}
+	v, err := s.app.AdminWithdrawal(c.Request.Context(), user(c), id)
+	if err != nil {
+		s.fail(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, v)
+}
+
+func (s *Server) sendPDF(c *gin.Context, b []byte, name string, err error) {
+	if err != nil {
+		s.fail(c, err)
+		return
+	}
+	c.Header("Content-Disposition", `attachment; filename="`+name+`"`)
+	c.Header("Cache-Control", "no-store")
+	c.Data(http.StatusOK, "application/pdf", b)
+}
+
+func (s *Server) adminWithdrawalPDF(c *gin.Context) {
+	id, ok := s.idParam(c)
+	if !ok {
+		return
+	}
+	b, name, err := s.app.AdminPaymentOrdersPDF(c.Request.Context(), user(c), id, "")
+	s.sendPDF(c, b, name, err)
+}
+
+func (s *Server) adminWithdrawalsPDF(c *gin.Context) {
+	b, name, err := s.app.AdminPaymentOrdersPDF(c.Request.Context(), user(c), "", d.WithdrawalStatus(c.DefaultQuery("status", "approved")))
+	s.sendPDF(c, b, name, err)
 }

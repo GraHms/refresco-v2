@@ -7,12 +7,14 @@ import (
 	"log/slog"
 	"math/rand"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/refresco/refresco-v2/backend/internal/adapters/notify"
 	"github.com/refresco/refresco-v2/backend/internal/adapters/payments/mock"
+	"github.com/refresco/refresco-v2/backend/internal/adapters/pdf"
 	"github.com/refresco/refresco-v2/backend/internal/adapters/postgres"
 	"github.com/refresco/refresco-v2/backend/internal/adapters/security"
 	"github.com/refresco/refresco-v2/backend/internal/app"
@@ -51,7 +53,7 @@ func setup(t *testing.T) (*app.App, *d.User) {
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
 	a := app.New(app.Deps{
 		Store: postgres.New(db), Metrics: postgres.NewMetrics(db), Payments: mock.New([]byte("secret"), 0),
-		Notifier: notify.Log{L: log}, Hasher: security.Bcrypt{Cost: 10}, Tokens: security.JWT{Secret: []byte("k"), TTL: time.Hour, Issuer: "t"},
+		Notifier: notify.Log{L: log}, Docs: pdf.Renderer{Loc: time.UTC}, Hasher: security.Bcrypt{Cost: 10}, Tokens: security.JWT{Secret: []byte("k"), TTL: time.Hour, Issuer: "t"},
 		Clock: security.SystemClock{}, Log: log, Secret: []byte("s"), PublicURL: "http://x", Location: time.UTC, AllowSimulate: true,
 	})
 	ctx := context.Background()
@@ -168,6 +170,46 @@ func TestDonationLifecycle(t *testing.T) {
 	if err := a.AdminActOnWithdrawal(ctx, root, wd2.ID, app.WithdrawalAction{Action: "reject", Reason: "NIB inválido"}); err == nil {
 		t.Fatal("rejected a paid withdrawal")
 	}
+	if _, err := a.AddPayoutAccount(ctx, cr, app.PayoutAccountInput{Kind: d.PayoutNIB, Number: "000800000412345678101", Bank: "BCI"}); err == nil {
+		t.Fatal("NIB without holder accepted")
+	}
+	nib, err := a.AddPayoutAccount(ctx, cr, app.PayoutAccountInput{Kind: d.PayoutNIB, Number: "0008 0000 0412 3456 7810 1", Bank: "BCI", Holder: "  Banda   Teste Lda "})
+	if err != nil {
+		t.Fatal(err)
+	}
+	s2, _ := a.CreateSupport(ctx, "bandateste", app.CreateSupportInput{Amount: 1000 * d.MT, Channel: d.ChannelCard, CardToken: "mock_tok_test1234", CardBrand: "visa", CardLast4: "4242"})
+	if _, _, err := a.SubmitOTP(ctx, s2.ID, "123456"); err != nil {
+		t.Fatal(err)
+	}
+	wd3, err := a.RequestWithdrawal(ctx, cr, 500*d.MT, nib.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	det, err := a.AdminWithdrawal(ctx, root, wd3.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if det.DestHolder != "Banda Teste Lda" || !strings.Contains(det.DestNumber, "0008 0000 0412 3456 7810 1") || det.PaidTotal != 500*d.MT || len(det.Recent) != 2 {
+		t.Fatalf("detail wrong: holder=%q nib=%q paid=%d recent=%d", det.DestHolder, det.DestNumber, det.PaidTotal, len(det.Recent))
+	}
+	if _, err := a.AdminWithdrawal(ctx, sess.User, wd3.ID); err == nil {
+		t.Fatal("creator read admin detail")
+	}
+	one, name, err := a.AdminPaymentOrdersPDF(ctx, root, wd3.ID, "")
+	if err != nil || !strings.HasPrefix(string(one), "%PDF-") || name != wd3.Code+".pdf" {
+		t.Fatalf("single pdf: %v %s", err, name)
+	}
+	if _, _, err := a.AdminPaymentOrdersPDF(ctx, root, "", d.WithdrawalApproved); err == nil {
+		t.Fatal("empty approved batch should fail")
+	}
+	batch, _, err := a.AdminPaymentOrdersPDF(ctx, root, "", d.WithdrawalRequested)
+	if err != nil || !strings.HasPrefix(string(batch), "%PDF-") {
+		t.Fatalf("batch pdf: %v", err)
+	}
+	if _, _, err := a.AdminPaymentOrdersPDF(ctx, sess.User, wd3.ID, ""); err == nil {
+		t.Fatal("creator exported payment orders")
+	}
+
 	ws, _ := a.Store.Withdrawals().List(ctx, ports.WithdrawalFilter{AccountID: cr.Account.ID, Statuses: []d.WithdrawalStatus{d.WithdrawalPaid}})
 	if len(ws) != 1 || ws[0].TransferRef != "MP-PAY-1" {
 		t.Fatalf("paid withdrawal not recorded: %+v", ws)

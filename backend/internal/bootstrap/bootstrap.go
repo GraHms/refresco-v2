@@ -9,6 +9,7 @@ import (
 
 	"github.com/refresco/refresco-v2/backend/internal/adapters/notify"
 	"github.com/refresco/refresco-v2/backend/internal/adapters/payments/mock"
+	"github.com/refresco/refresco-v2/backend/internal/adapters/pdf"
 	"github.com/refresco/refresco-v2/backend/internal/adapters/postgres"
 	"github.com/refresco/refresco-v2/backend/internal/adapters/security"
 	"github.com/refresco/refresco-v2/backend/internal/app"
@@ -32,6 +33,7 @@ func Build(cfg config.Config, log *slog.Logger) (*app.App, *gorm.DB, error) {
 		Metrics:       postgres.NewMetrics(db),
 		Payments:      mock.New(cfg.MockWebhookSecret, cfg.MockAutoConfirm),
 		Notifier:      notify.Log{L: log, RevealBodies: !cfg.Production()},
+		Docs:          pdf.Renderer{Loc: loc},
 		Hasher:        security.Bcrypt{Cost: cfg.BcryptCost},
 		Tokens:        security.JWT{Secret: cfg.JWTSecret, TTL: cfg.SessionTTL, Issuer: "refres.co"},
 		Clock:         security.SystemClock{},

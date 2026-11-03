@@ -5,7 +5,7 @@ import { digits, fmt, fmtPhone, ini, MOL, monthOf, mt, mtN, SEG, shortDateTime, 
 import { Badge, Modal, ModalHead, Seg, useToast } from '../../components/ui';
 import { PageHead } from './Layout';
 
-interface Acct { id: string; kind: 'mpesa' | 'emola' | 'nib'; number: string; bank?: string; is_main: boolean }
+interface Acct { id: string; kind: 'mpesa' | 'emola' | 'nib'; number: string; bank?: string; holder?: string; is_main: boolean }
 interface WalletV {
   member_id: string; balance: number; processing: number; processing_count: number; paid_month: number; paid_month_count: number; min_withdrawal: number;
   accounts: Acct[]; members: { id: string; name: string; pct: number; balance: number; last_paid?: number; last_when?: string }[];
@@ -60,6 +60,7 @@ export default function Payouts() {
               <span style={{ flex: 1, minWidth: 0, lineHeight: 1.35 }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{KIND[a.kind][0]}{a.bank ? ' · ' + a.bank : ''}</span>{a.is_main && <span style={{ height: 20, padding: '0 6px', borderRadius: 6, background: '#FDE9DC', color: '#A83700', fontSize: 11, fontWeight: 600, display: 'inline-flex', alignItems: 'center' }}>Principal</span>}</span>
                 <span className="mono" style={{ display: 'block', fontSize: 12.5, color: '#2B2723' }}>{a.number}</span>
+                {a.holder && <span style={{ display: 'block', fontSize: 12, color: '#6E6861' }}>Titular: {a.holder}</span>}
               </span>
               <span style={{ flex: 'none', fontSize: 12.5, color: '#6E6861' }}>Até 72 h</span>
               {!a.is_main && <button onClick={() => del(a)} aria-label="Remover conta" style={{ flex: 'none', width: 32, height: 32, border: 0, borderRadius: 9, background: 'transparent', color: '#6E6861', display: 'grid', placeItems: 'center' }}><Trash2 size={15} /></button>}
@@ -163,14 +164,14 @@ function WithdrawModal({ w, onClose, onDone }: { w: WalletV; onClose: () => void
 
 function AddAccount({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
   const [kind, setKind] = useState<'mpesa' | 'emola' | 'nib'>('mpesa');
-  const [num, setNum] = useState(''); const [bank, setBank] = useState(BANKS[0]); const [main, setMain] = useState(false);
+  const [num, setNum] = useState(''); const [bank, setBank] = useState(BANKS[0]); const [holder, setHolder] = useState(''); const [main, setMain] = useState(false);
   const [err, setErr] = useState(''); const [busy, setBusy] = useState(false);
-  const valid = kind === 'nib' ? num.length === 21 : num.length === 9 && walletOf(num) === kind;
+  const valid = kind === 'nib' ? num.length === 21 && holder.trim().length >= 3 : num.length === 9 && walletOf(num) === kind;
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!valid) { setErr(kind === 'nib' ? 'O NIB tem 21 dígitos.' : 'O número não corresponde à carteira escolhida.'); return; }
+    if (!valid) { setErr(kind === 'nib' ? (num.length !== 21 ? 'O NIB tem 21 dígitos.' : 'Escreve o nome do titular da conta.') : 'O número não corresponde à carteira escolhida.'); return; }
     setBusy(true); setErr('');
-    try { await api.post('/backoffice/wallet/accounts', { kind, number: num, bank: kind === 'nib' ? bank : '', is_main: main }); onDone(); }
+    try { await api.post('/backoffice/wallet/accounts', { kind, number: num, bank: kind === 'nib' ? bank : '', holder: kind === 'nib' ? holder : '', is_main: main }); onDone(); }
     catch (x) { setErr(x instanceof ApiError ? x.message : 'Algo correu mal.'); } finally { setBusy(false); }
   }
   return (
@@ -181,6 +182,7 @@ function AddAccount({ onClose, onDone }: { onClose: () => void; onDone: () => vo
         {kind === 'nib' ? <>
           <label className="field"><span>Banco</span><select className="input" value={bank} onChange={e => setBank(e.target.value)}>{BANKS.map(b => <option key={b}>{b}</option>)}</select></label>
           <label className="field"><span>NIB</span><input className="input mono" inputMode="numeric" value={num.replace(/(\d{4})(?=\d)/g, '$1 ')} onChange={e => setNum(e.target.value.replace(/\D/g, '').slice(0, 21))} placeholder="0008 0000 0412 3456 7810 1" /></label>
+          <label className="field"><span>Titular da conta</span><input className="input" value={holder} onChange={e => setHolder(e.target.value.slice(0, 80))} placeholder="Nome como aparece no banco" autoComplete="name" /></label>
         </> : <label className="field"><span>Número {KIND[kind][0]}</span>
           <span className="affix"><span className="pre">+258</span><input type="tel" className="mono" value={fmtPhone(num)} onChange={e => setNum(digits(e.target.value, 9))} placeholder={kind === 'mpesa' ? '84 123 4567' : '86 123 4567'} /></span></label>}
         <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13.5 }}><input type="checkbox" checked={main} onChange={e => setMain(e.target.checked)} />Usar como conta principal</label>

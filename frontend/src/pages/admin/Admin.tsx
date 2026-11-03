@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate, useOutletContext, useParams } from 'react-router-dom';
-import { ArrowUpRight, Ban, Banknote, Check, Copy, CupSoda, Handshake, LayoutDashboard, LogOut, PiggyBank, Search, Send, TicketPlus, Ticket, TriangleAlert, UsersRound, Wallet, X } from 'lucide-react';
+import { ArrowUpRight, Ban, Banknote, Check, Copy, CupSoda, Eye, FileDown, Handshake, Landmark, Smartphone, LayoutDashboard, LogOut, PiggyBank, Search, Send, TicketPlus, Ticket, TriangleAlert, UsersRound, Wallet, X } from 'lucide-react';
 import { api, ApiError, SeriesPoint, WithdrawalView } from '../../lib/api';
 import { avOf, bucketLabel, DEST, ini, longDate, mt, mtN, pct, relative, shortDateTime, WD_ST } from '../../lib/format';
 import { useSession } from '../../lib/session';
@@ -236,6 +236,7 @@ export function AdminWithdrawals() {
   const [data, setData] = useState<{ items: AdminW[]; summary: Record<string, { count: number; amount: number }> } | null>(null);
   const [f, setF] = useState('open');
   const [modal, setModal] = useState<{ type: 'reject' | 'complete'; w: AdminW; reason: string; note: string; ref: string } | null>(null);
+  const [detail, setDetail] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const load = () => api.get<typeof data>('/admin/withdrawals').then(setData).catch(() => {});
   useEffect(() => { load(); }, []);
@@ -246,12 +247,18 @@ export function AdminWithdrawals() {
     .sort((x, y) => +closed(x) - +closed(y) || (closed(x) ? 0 : left(x) - left(y)));
   async function act(w: AdminW, body: Record<string, string>, msg: string) {
     setBusy(true);
-    try { const r = await api.post<typeof data>(`/admin/withdrawals/${w.id}/actions`, body); setData(r); setModal(null); toast(msg); reloadBadge(); }
+    try { const r = await api.post<typeof data>(`/admin/withdrawals/${w.id}/actions`, body); setData(r); setModal(null); setDetail(d => (d ? d + '#' : d)); toast(msg); reloadBadge(); }
     catch (e) { toast(e instanceof ApiError ? e.message : 'Algo correu mal.', true); load(); } finally { setBusy(false); }
   }
   const sum = (k: string) => data?.summary[k] || { count: 0, amount: 0 };
   return <>
-    <Head kicker="Prazo: 72 horas por pedido" title="Levantamentos" />
+    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+      <Head kicker="Prazo: 72 horas por pedido" title="Levantamentos" />
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
+        {sum('approved').count > 0 && <a className="btn" href="/api/v1/admin/withdrawals.pdf?status=approved" download><FileDown size={16} />PDF dos aprovados ({sum('approved').count})</a>}
+        {sum('requested').count > 0 && <a className="btn" href="/api/v1/admin/withdrawals.pdf?status=requested" download><FileDown size={16} />PDF dos pedidos ({sum('requested').count})</a>}
+      </div>
+    </div>
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,180px),1fr))', gap: 12 }}>
       {([['open', 'Por tratar', '#D14400'], ['approved', 'Aprovados', '#9A5B00'], ['paid', 'Pagos', '#17803D'], ['rejected', 'Rejeitados', '#B42318']] as const).map(([k, l, dot]) => (
         <button key={k} onClick={() => setF(f === k ? 'all' : k)} style={{ padding: 16, borderRadius: 18, border: `1.5px solid ${f === k ? '#1A1410' : '#E4DDD1'}`, background: f === k ? '#fff' : '#FBF7F1', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -272,6 +279,7 @@ export function AdminWithdrawals() {
             <div style={{ flex: '0 0 130px', lineHeight: 1.3 }}><span className="display" style={{ display: 'block', fontWeight: 800, fontSize: 19, letterSpacing: '-0.02em' }}>{mt(w.amount)}</span><span style={{ display: 'block', fontSize: 12, color: '#6E6861' }}>Saldo: {mt(w.balance)}</span></div>
             <div style={{ flex: '0 0 150px', display: 'flex', flexDirection: 'column', gap: 4 }}><Badge st={WD_ST[w.status]} style={{ alignSelf: 'flex-start' }} /><span style={{ fontSize: 12, fontWeight: 600, color: flag ? '#B42318' : sla[1] }}>{flag ? '⚠ ' + flag : sla[0]}</span></div>
             <div style={{ flex: '1 1 220px', display: 'flex', justifyContent: 'flex-end', gap: 8, flexWrap: 'wrap' }}>
+              <button className="btn" style={{ height: 40, padding: '0 12px', fontSize: 13.5, borderColor: '#E4DDD1' }} onClick={() => setDetail(w.id)} aria-label={'Ver detalhes de ' + w.code}><Eye size={15} />Detalhes</button>
               {w.status === 'requested' && !flag && <button className="btn btn-dark" style={{ height: 40, padding: '0 14px', fontSize: 13.5 }} disabled={busy} onClick={() => act(w, { action: 'approve' }, `${w.code} aprovado · pronto a pagar`)}><Check size={15} />Aprovar</button>}
               {w.status === 'approved' && <button className="btn btn-primary" style={{ height: 40, padding: '0 14px', fontSize: 13.5 }} onClick={() => setModal({ type: 'complete', w, reason: '', note: '', ref: '' })}><Send size={15} />Marcar como pago</button>}
               {!closed(w) && <button className="btn" style={{ height: 40, padding: '0 14px', fontSize: 13.5, color: '#B42318', borderColor: '#E4DDD1' }} onClick={() => setModal({ type: 'reject', w, reason: flag === 'Conta suspensa' ? flag : flag ? 'Conta por verificar' : '', note: '', ref: '' })}>Rejeitar</button>}
@@ -282,6 +290,10 @@ export function AdminWithdrawals() {
       })}
       {data && items.length === 0 && <div className="card" style={{ padding: 48, textAlign: 'center', color: '#6E6861', borderRadius: 20 }}>Nada para mostrar aqui.</div>}
     </div>
+    {detail && <WithdrawalDrawer id={detail.replace(/#+$/, '')} version={detail} onClose={() => setDetail(null)} busy={busy}
+      onApprove={w => act(w, { action: 'approve' }, `${w.code} aprovado · pronto a pagar`)}
+      onComplete={w => setModal({ type: 'complete', w, reason: '', note: '', ref: '' })}
+      onReject={w => setModal({ type: 'reject', w, reason: w.account_status === 'suspended' ? 'Conta suspensa' : w.account_status === 'pending' ? 'Conta por verificar' : '', note: '', ref: '' })} />}
     {modal && (
       <Modal onClose={() => setModal(null)} label="Levantamento">
         <div className="display" style={{ fontWeight: 800, fontSize: 21, letterSpacing: '-0.03em', lineHeight: 1.15 }}>{modal.type === 'reject' ? `Rejeitar ${modal.w.code}` : `Marcar ${modal.w.code} como pago`}</div>
@@ -304,6 +316,74 @@ export function AdminWithdrawals() {
       </Modal>
     )}
   </>;
+}
+
+interface WDetail extends AdminW { member_role: string; member_phone: string; member_pct: number; account_handle: string; owner_name: string; owner_email: string; owner_phone: string; recent: WithdrawalView[]; paid_total: number }
+
+function CopyRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  const toast = useToast();
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderTop: '1px solid #F0EBE3' }}>
+      <span style={{ width: 120, flex: 'none', color: '#6E6861' }}>{label}</span>
+      <span className={mono ? 'mono' : ''} style={{ flex: 1, minWidth: 0, fontWeight: mono ? 600 : 500, overflowWrap: 'anywhere' }}>{value || '—'}</span>
+      {value && <button className="link-btn" style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12.5 }} onClick={() => { copy(value.replace(/^\+258 /, '').replace(/\s/g, mono ? '' : ' ')); toast(label + ' copiado'); }} aria-label={'Copiar ' + label}><Copy size={13} />Copiar</button>}
+    </div>
+  );
+}
+
+function WithdrawalDrawer({ id, version, onClose, busy, onApprove, onComplete, onReject }: { id: string; version: string; onClose: () => void; busy: boolean; onApprove: (w: AdminW) => void; onComplete: (w: AdminW) => void; onReject: (w: AdminW) => void }) {
+  const [w, setW] = useState<WDetail | null>(null);
+  useEffect(() => { api.get<WDetail>('/admin/withdrawals/' + id).then(setW).catch(() => onClose()); }, [id, version]);
+  if (!w) return <Drawer onClose={onClose} label="Levantamento"><div style={{ padding: 24 }}><div className="skeleton" style={{ height: 260 }} /></div></Drawer>;
+  const closed = w.status === 'paid' || w.status === 'rejected';
+  const h = Math.round((new Date(w.due_at).getTime() - Date.now()) / 3600000);
+  const flag = !closed && w.account_status !== 'active';
+  const nib = w.dest_kind === 'nib';
+  const section = (t: string) => <div className="label-sm" style={{ marginTop: 4 }}>{t}</div>;
+  const box: React.CSSProperties = { flex: 'none', borderRadius: 14, border: '1px solid #ECE7DF', overflow: 'hidden', fontSize: 13.5 };
+  const timeline: [string, string | undefined][] = [['Pedido', w.created_at], [w.status === 'rejected' ? 'Rejeitado' : 'Aprovado', w.decided_at], ['Pago', w.paid_at]];
+  return (
+    <Drawer onClose={onClose} label={'Levantamento ' + w.code}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '18px 18px 16px', borderBottom: '1px solid #F2EAE0' }}>
+        <span style={{ flex: 'none', width: 44, height: 44, borderRadius: 14, background: nib ? '#ECE6DB' : '#D14400', color: nib ? '#1A1410' : '#fff', display: 'grid', placeItems: 'center' }}>{nib ? <Landmark size={19} /> : <Smartphone size={19} />}</span>
+        <span style={{ flex: 1, minWidth: 0, lineHeight: 1.3 }}><span className="mono" style={{ display: 'block', fontWeight: 700, fontSize: 16 }}>{w.code}</span><span style={{ display: 'block', fontSize: 12.5, color: '#6E6861' }}>{w.member_name} · {w.account_name}</span></span>
+        <Badge st={WD_ST[w.status]} />
+        <button className="icon-btn" onClick={onClose} aria-label="Fechar"><X size={17} /></button>
+      </div>
+      <div style={{ flex: 1, overflowY: 'auto', padding: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 }}>
+          <div><div className="display" style={{ fontWeight: 800, fontSize: 38, letterSpacing: '-0.04em', lineHeight: 1 }}>{mt(w.amount, 2)}</div>
+            <div style={{ marginTop: 6, fontSize: 13, color: closed ? '#6E6861' : h < 0 || h <= 24 ? '#B42318' : '#9A5B00', fontWeight: closed ? 400 : 600 }}>{closed ? `Pedido a ${shortDateTime(w.created_at)}` : h < 0 ? `Atrasado ${-h} h · prazo ${shortDateTime(w.due_at)}` : `Faltam ${h} h · pagar até ${shortDateTime(w.due_at)}`}</div></div>
+        </div>
+        {flag && <div style={{ display: 'flex', gap: 10, padding: '12px 14px', borderRadius: 14, background: '#FDE8E4', color: '#7A1F14', fontSize: 13 }}><TriangleAlert size={16} style={{ marginTop: 1 }} /><span>{w.account_status === 'suspended' ? 'A conta está suspensa. Não pagues este pedido.' : 'A conta ainda não foi verificada. Verifica-a em Contas antes de aprovar.'}</span></div>}
+        {nib && !w.dest_holder && !closed && <div style={{ display: 'flex', gap: 10, padding: '12px 14px', borderRadius: 14, background: '#FBEFD9', color: '#6B3F00', fontSize: 13 }}><TriangleAlert size={16} style={{ marginTop: 1 }} /><span>O titular da conta bancária não foi indicado. Confirma com o criador antes de transferir.</span></div>}
+        {section('Dados para pagamento')}
+        <div style={box}>
+          <div style={{ display: 'flex', gap: 10, padding: '10px 14px' }}><span style={{ width: 120, flex: 'none', color: '#6E6861' }}>Meio</span><span style={{ fontWeight: 600 }}>{nib ? `Transferência bancária · ${w.dest_bank}` : DEST[w.dest_kind]}</span></div>
+          <CopyRow label={nib ? 'NIB' : 'Número'} value={w.dest_number} mono />
+          <CopyRow label={nib ? 'Titular' : 'Nome'} value={nib ? w.dest_holder || '' : w.member_name} />
+          <CopyRow label="Valor" value={mtN(w.amount, 2)} mono />
+          <CopyRow label="Descritivo" value={'REFRES ' + w.code} mono />
+        </div>
+        {section('Beneficiário')}
+        <div style={box}>
+          {([['Membro', `${w.member_name}${w.member_role ? ' · ' + w.member_role : ''} · ${w.member_pct}%`], ['Contacto', w.member_phone], ['Conta', `${w.account_name} · refres.co/${w.account_handle}`], ['Estado da conta', AST[w.account_status][0]], ['Responsável', `${w.owner_name} · ${w.owner_email}`], ['Saldo atual', mt(w.balance, 2)], ['Já levantado', mt(w.paid_total, 2)]] as const).map(([k, v], i) =>
+            <div key={k} style={{ display: 'flex', gap: 10, padding: '10px 14px', borderTop: i ? '1px solid #F0EBE3' : 0 }}><span style={{ width: 120, flex: 'none', color: '#6E6861' }}>{k}</span><span style={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere' }}>{v}</span></div>)}
+        </div>
+        {section('Histórico')}
+        {timeline.filter(([, t]) => t).map(([k, t]) => <div key={k} style={{ display: 'flex', gap: 10, fontSize: 13 }}><span style={{ flex: 'none', width: 7, height: 7, marginTop: 7, borderRadius: '50%', background: '#D14400' }} /><span style={{ flex: 1 }}><b style={{ fontWeight: 600 }}>{k}</b> · {shortDateTime(t!)}{k === 'Pago' && w.transfer_ref ? ` · ref. ${w.transfer_ref}` : ''}{k === 'Rejeitado' && w.reason ? ` · ${w.reason}` : ''}</span></div>)}
+        {w.note && <div style={{ padding: '10px 12px', borderRadius: 12, background: '#F8F5EF', fontSize: 13 }}>{w.note}</div>}
+        {w.recent.length > 0 && <>{section('Levantamentos anteriores deste membro')}
+          <div style={box}>{w.recent.map((r, i) => <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', borderTop: i ? '1px solid #F0EBE3' : 0 }}><span className="mono" style={{ fontSize: 12.5 }}>{r.code}</span><span style={{ flex: 1, fontSize: 12.5, color: '#6E6861' }}>{shortDateTime(r.created_at)}</span><span className="mono" style={{ fontSize: 12.5 }}>{mt(r.amount)}</span><Badge st={WD_ST[r.status]} style={{ height: 22, fontSize: 11.5 }} /></div>)}</div></>}
+      </div>
+      <div style={{ display: 'flex', gap: 8, padding: '14px 18px 18px', borderTop: '1px solid #F2EAE0', flexWrap: 'wrap' }}>
+        <a className="btn" style={{ flex: '1 1 120px', height: 44 }} href={`/api/v1/admin/withdrawals/${w.id}/pdf`} download><FileDown size={15} />Descarregar PDF</a>
+        {w.status === 'requested' && !flag && <button className="btn btn-dark" style={{ flex: '1 1 120px', height: 44 }} disabled={busy} onClick={() => onApprove(w)}><Check size={15} />Aprovar</button>}
+        {w.status === 'approved' && <button className="btn btn-primary" style={{ flex: '1 1 120px', height: 44 }} onClick={() => onComplete(w)}><Send size={15} />Marcar como pago</button>}
+        {!closed && <button className="btn" style={{ flex: '1 1 100px', height: 44, color: '#B42318' }} onClick={() => onReject(w)}>Rejeitar</button>}
+      </div>
+    </Drawer>
+  );
 }
 
 interface Inv { code: string; note: string; max_uses: number; uses: number; used_by: string[]; fee_bps: number; status: 'active' | 'revoked'; created_at: string }

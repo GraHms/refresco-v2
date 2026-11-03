@@ -176,6 +176,7 @@ type PayoutAccount struct {
 	Kind      PayoutKind
 	Number    string
 	BankName  string
+	Holder    string
 	IsMain    bool
 	CreatedAt time.Time
 }
@@ -259,6 +260,7 @@ type Withdrawal struct {
 	DestKind    PayoutKind
 	DestNumber  string
 	DestBank    string
+	DestHolder  string
 	Status      WithdrawalStatus
 	Reason      string
 	Note        string

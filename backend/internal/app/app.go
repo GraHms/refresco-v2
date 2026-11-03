@@ -23,6 +23,7 @@ type Deps struct {
 	Metrics      ports.MetricsReader
 	Payments     ports.PaymentGateway
 	Notifier     ports.Notifier
+	Docs         ports.DocumentRenderer
 	Hasher       ports.PasswordHasher
 	Tokens       ports.TokenIssuer
 	Clock        ports.Clock
