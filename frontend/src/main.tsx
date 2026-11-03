@@ -27,7 +27,8 @@ function Guard({ role, children }: { role: 'creator' | 'superadmin'; children: J
 
 function Boot({ children }: { children: JSX.Element }) {
   const { me, refresh } = useSession();
-  useEffect(() => { if (me === undefined) refresh(); }, []);
+  const loc = useLocation();
+  useEffect(() => { if (me === undefined && loc.pathname === '/') refresh(); }, [loc.pathname]);
   return children;
 }
 

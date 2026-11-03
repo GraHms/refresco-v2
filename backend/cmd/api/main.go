@@ -15,6 +15,8 @@ import (
 	"github.com/refresco/refresco-v2/backend/internal/config"
 )
 
+var version = "dev"
+
 func main() {
 	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	if err := run(log); err != nil {
@@ -65,7 +67,7 @@ func run(log *slog.Logger) error {
 		WriteTimeout: 30 * time.Second, IdleTimeout: 120 * time.Second, MaxHeaderBytes: 1 << 16}
 	errc := make(chan error, 1)
 	go func() {
-		log.Info("listening", "addr", cfg.Addr, "env", cfg.Env)
+		log.Info("listening", "addr", cfg.Addr, "env", cfg.Env, "version", version)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			errc <- err
 		}

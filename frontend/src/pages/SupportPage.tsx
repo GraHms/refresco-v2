@@ -95,6 +95,7 @@ function SupportCard({ page }: { page: Page }) {
   const [otp, setOtp] = useState('');
   const [now, setNow] = useState(Date.now());
   const idem = useRef(uid());
+  const nameRef = useRef<HTMLInputElement>(null);
 
   const total = custom ? parseInt(custom, 10) || 0 : amt;
   const isWallet = method !== 'card';
@@ -281,14 +282,14 @@ function SupportCard({ page }: { page: Page }) {
                 {isHandle && <button type="button" onClick={() => setNetOpen(o => !o)} aria-label="Rede social" style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: 4, height: '100%', padding: '0 4px 0 14px', border: 0, background: 'transparent' }}>
                   <Brand name={NETS.find(n => n[0] === net)![2]} size={15} /><ChevronDown size={13} color="#6E6861" />
                 </button>}
-                <input value={name} onChange={e => { const v = e.target.value.slice(0, 40); setName(v); setNetOpen(v === '@' ? true : v.startsWith('@') ? netOpen : false); }}
+                <input ref={nameRef} value={name} onChange={e => { const v = e.target.value.slice(0, 40); setName(v); setNetOpen(v === '@' ? true : v.startsWith('@') ? netOpen : false); }}
                   onFocus={() => setNameFocus(true)} onBlur={() => setNameFocus(false)} placeholder="Nome ou @rede_social" aria-label="Nome ou rede social"
                   style={{ flex: 1, minWidth: 0, height: '100%', border: 0, outline: 'none', background: 'transparent', padding: `0 14px 0 ${isHandle ? '4px' : '14px'}`, fontSize: 15 }} />
               </div>
               {netOpen && isHandle && (
                 <div style={{ position: 'absolute', left: 0, top: 'calc(100% + 6px)', zIndex: 20, width: 210, padding: 6, borderRadius: 16, background: '#fff', border: '1px solid #E4DDD1', boxShadow: '0 20px 40px -16px rgba(26,20,16,.3)' }}>
                   {NETS.map(([k, label, icon]) => (
-                    <button key={k} type="button" className="hover-paper" onClick={() => { setNet(k); setNetOpen(false); }}
+                    <button key={k} type="button" className="hover-paper" onClick={() => { setNet(k); setNetOpen(false); requestAnimationFrame(() => { const el = nameRef.current; if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); } }); }}
                       style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, height: 40, padding: '0 10px', border: 0, borderRadius: 11, background: net === k ? '#FBF7F1' : 'transparent', textAlign: 'left', fontSize: 14, fontWeight: 500 }}>
                       <Brand name={icon} size={15} /><span style={{ flex: 1 }}>{label}</span>{net === k && <Check size={15} color="#D14400" />}
                     </button>
