@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Check, CircleAlert, CircleCheck, Hourglass, Info, PauseCircle, ShieldCheck, UserMinus, UserPlus } from 'lucide-react';
 import { api, ApiError, MemberView } from '../../lib/api';
 import { CH, digits, fmt, fmtPhone, ini, longDate, pct as fmtPct, SEG, walletOf } from '../../lib/format';
-import { Modal, ModalHead, Seg, Toggle, useToast } from '../../components/ui';
+import { Modal, ModalHead, Seg, useToast } from '../../components/ui';
 import { PageHead, useBo } from './Layout';
 
 interface Group {
