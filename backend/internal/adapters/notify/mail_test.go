@@ -113,7 +113,7 @@ func TestMailSendsAndRoutes(t *testing.T) {
 	other := &recorder{}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	n := NewMail(ctx, Mail{Addr: addr, From: "refres.co <no-reply@rihagateway.com>", Other: other, Log: slog.New(slog.NewTextHandler(io.Discard, nil))})
+	n := NewMail(ctx, Mail{Addr: addr, From: "Refresco <no-reply@rihagateway.com>", Other: other, Log: slog.New(slog.NewTextHandler(io.Discard, nil))})
 
 	if err := n.Send(ctx, ports.Message{To: "+258 84 123 4567", Kind: "group_invite", Body: "x"}); err != nil {
 		t.Fatal(err)
@@ -131,8 +131,11 @@ func TestMailSendsAndRoutes(t *testing.T) {
 		t.Fatal("no email")
 	}
 	parts, m := decode(t, raw)
-	if m.Header.Get("From") != "refres.co <no-reply@rihagateway.com>" || !strings.Contains(m.Header.Get("To"), "a@b.co.mz") {
+	if m.Header.Get("From") != "Refresco <no-reply@rihagateway.com>" || !strings.Contains(m.Header.Get("To"), "a@b.co.mz") {
 		t.Fatalf("headers: %v", m.Header)
+	}
+	if !strings.Contains(parts["text/plain"], "+258 84 825 5237") || !strings.Contains(parts["text/html"], "258 84 825 5237") {
+		t.Fatalf("no help line: %v", parts)
 	}
 	if !strings.Contains(parts["text/plain"], "123456") || !strings.Contains(parts["text/html"], ">123456</td>") {
 		t.Fatalf("parts: %v", parts)
@@ -141,7 +144,7 @@ func TestMailSendsAndRoutes(t *testing.T) {
 
 func TestMailEscapesAndLinks(t *testing.T) {
 	addr, _ := netmail.ParseAddress("a@b.co.mz")
-	raw, err := buildMail("refres.co <no-reply@rihagateway.com>", addr, ports.Message{Kind: "split_approval", Body: "<b>Tu Pra Tu</b> propôs", Link: "https://pagarefresco.com/aprovar#tok"})
+	raw, err := buildMail("Refresco <no-reply@rihagateway.com>", addr, ports.Message{Kind: "split_approval", Body: "<b>Tu Pra Tu</b> propôs", Link: "https://pagarefresco.com/aprovar#tok"})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { SUPPORT_PHONE, SUPPORT_TEL } from '../lib/support';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Check, CircleAlert, CircleCheck, Eye, EyeOff, Info, Link as LinkIcon, PartyPopper, ShieldCheck, Ticket } from 'lucide-react';
 import { api, ApiError, Me } from '../lib/api';
@@ -26,7 +27,7 @@ export default function Auth() {
   const [showPw, setShowPw] = useState(false);
   const pw = { type: showPw ? 'text' : 'password', toggle: () => setShowPw(s => !s), Icon: showPw ? EyeOff : Eye };
 
-  useEffect(() => { document.title = (screen === 'register' ? 'Criar conta' : screen === 'forgot' ? 'Recuperar palavra-passe' : 'Entrar') + ' · refres.co'; }, [screen]);
+  useEffect(() => { document.title = (screen === 'register' ? 'Criar conta' : screen === 'forgot' ? 'Recuperar palavra-passe' : 'Entrar') + ' · Refresco'; }, [screen]);
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', background: '#F6EFE6', fontSize: 15 }}>
@@ -44,7 +45,7 @@ export default function Auth() {
                 screen === 'register' ? <Register pw={pw} onCreated={setCreated} /> : <Forgot pw={pw} />}
           </div>
         </div>
-        <div style={{ textAlign: 'center', fontSize: 12.5, color: '#6E6861' }}>© 2026 Refres, Lda · Maputo</div>
+        <div style={{ textAlign: 'center', fontSize: 12.5, color: '#6E6861' }}>© 2026 Refres, Lda · Maputo · Ajuda: <a href={SUPPORT_TEL} style={{ color: 'inherit' }}>{SUPPORT_PHONE}</a></div>
       </main>
     </div>
   );
@@ -63,7 +64,7 @@ function Aside() {
       <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 22, maxWidth: 440 }}>
         <div className="mono" style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, letterSpacing: '.1em', textTransform: 'uppercase', color: '#A89C8F' }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: '#FF6A1A' }} />Acesso por convite</div>
         <h1 className="display" style={{ margin: 0, fontWeight: 800, fontSize: 'clamp(36px,3.6vw,52px)', lineHeight: 0.98, letterSpacing: '-0.045em' }}>Os teus fãs pagam-te um refresco.</h1>
-        <p style={{ margin: 0, fontSize: 17, lineHeight: 1.55, color: '#CFC6B8' }}>Apoios por M-Pesa num só link, com e-Mola e cartão em breve. Por agora a refres.co está aberta apenas a criadores convidados.</p>
+        <p style={{ margin: 0, fontSize: 17, lineHeight: 1.55, color: '#CFC6B8' }}>Apoios por M-Pesa num só link, com e-Mola e cartão em breve. Por agora o Refresco está aberto apenas a criadores convidados.</p>
       </div>
       <div style={{ position: 'relative', zIndex: 1, maxWidth: 360, padding: 18, borderRadius: 20, background: '#F6EFE6', color: '#1A1410', display: 'flex', flexDirection: 'column', gap: 10, boxShadow: '0 30px 60px -20px rgba(0,0,0,.5)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span style={{ fontWeight: 600, fontSize: 14 }}>Tu Pra Tu Podcast</span><span className="mono" style={{ fontSize: 11.5, color: '#6E6861' }}>há 4 min</span></div>
@@ -171,13 +172,13 @@ function Register({ pw, onCreated }: { pw: Pw; onCreated: (h: string) => void })
     } catch (e) { setErr(errMsg(e)); } finally { setBusy(false); }
   }
 
-  const hint = invOk ? 'Convite válido · enviado por Equipa refres.co' : cs === 'bad' ? 'Este código não existe. Confirma com quem te convidou.' : cs === 'used' ? 'Este código já foi usado.' : cs === 'empty' ? 'Escreve o código que recebeste.' : 'Escreve o código de convite que recebeste.';
+  const hint = invOk ? 'Convite válido · enviado por Equipa Refresco' : cs === 'bad' ? 'Este código não existe. Confirma com quem te convidou.' : cs === 'used' ? 'Este código já foi usado.' : cs === 'empty' ? 'Escreve o código que recebeste.' : 'Escreve o código de convite que recebeste.';
   const hintColor = invOk ? '#17803D' : cs === 'idle' ? '#6E6861' : RED;
   const field: React.CSSProperties = { height: 50, padding: '0 14px', borderRadius: 13, background: '#fff', outline: 'none', fontSize: 15, minWidth: 0 };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
-      <div><h2 style={h2}>Criar conta</h2><p style={{ margin: '8px 0 0', color: '#57524B' }}>A refres.co está aberta só a criadores convidados. Começa pelo teu código.</p></div>
+      <div><h2 style={h2}>Criar conta</h2><p style={{ margin: '8px 0 0', color: '#57524B' }}>O Refresco está aberto só a criadores convidados. Começa pelo teu código.</p></div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 16, borderRadius: 20, background: invOk ? '#F1F8F3' : '#fff', border: `1.5px solid ${invOk ? '#BFE3CB' : cs === 'bad' || cs === 'used' ? '#F2C1BA' : '#E4DDD1'}`, transition: 'background-color .2s,border-color .2s' }}>
         <span style={{ fontSize: 13, fontWeight: 600 }}>Código de convite</span>
         <form onSubmit={e => { e.preventDefault(); check(); }} style={{ display: 'flex', gap: 8 }}>
@@ -245,7 +246,7 @@ function Created({ handle }: { handle: string }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 18 }}>
       <span style={{ width: 72, height: 72, borderRadius: 24, background: '#D14400', color: '#fff', display: 'grid', placeItems: 'center' }}><PartyPopper size={32} /></span>
-      <div><h2 style={{ ...h2, fontSize: 30 }}>Conta criada!</h2><p style={{ margin: '10px 0 0', color: '#57524B' }}>A tua página já existe. Antes do primeiro levantamento, a equipa refres.co vai verificar a tua conta.</p></div>
+      <div><h2 style={{ ...h2, fontSize: 30 }}>Conta criada!</h2><p style={{ margin: '10px 0 0', color: '#57524B' }}>A tua página já existe. Antes do primeiro levantamento, a equipa Refresco vai verificar a tua conta.</p></div>
       <div style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderRadius: 16, background: '#fff', border: '1px solid #E4DDD1' }}>
         <LinkIcon size={16} color="#6E6861" /><span className="mono" style={{ flex: 1, textAlign: 'left', fontSize: 14 }}>pagarefresco.com/{handle}</span>
         <span style={{ height: 24, padding: '0 8px', borderRadius: 7, background: '#E3F3E8', color: '#17803D', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center' }}>Ativa</span>

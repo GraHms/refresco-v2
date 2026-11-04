@@ -24,7 +24,7 @@ export const SOCIALS: { key: BrandName; label: string; prefix: string; ph: strin
 ];
 
 export function Logo({ h = 32, white }: { h?: number; white?: boolean }) {
-  return <img src={white ? '/assets/refres-logo-orange-white.png' : '/assets/refres-logo-orange.png'} alt="Refres" style={{ height: h, width: 'auto', display: 'block' }} />;
+  return <img src={white ? '/assets/refres-logo-orange-white.png' : '/assets/refres-logo-orange.png'} alt="Refresco" style={{ height: h, width: 'auto', display: 'block' }} />;
 }
 
 export function Toggle({ on, onClick, label, disabled }: { on: boolean; onClick: () => void; label: string; disabled?: boolean }) {

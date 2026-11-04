@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { SUPPORT_PHONE, SUPPORT_TEL } from '../lib/support';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowUpRight, Check, ChevronDown, CircleAlert, CircleCheck, CreditCard, Info, Landmark, Lock, RotateCw } from 'lucide-react';
 import { api, ApiError, Channel, Page, SupportStatus } from '../lib/api';
@@ -22,7 +23,7 @@ export default function SupportPage() {
   // Only the server can say a page doesn't exist: a dropped request says nothing.
   useEffect(() => {
     api.get<Page>('/pages/' + encodeURIComponent(handle.toLowerCase()))
-      .then(p => { setOffline(false); setPage(p); document.title = `Apoia ${p.name} com um refresco | refres.co`; })
+      .then(p => { setOffline(false); setPage(p); document.title = `Apoia ${p.name} com um refresco | Refresco`; })
       .catch(e => { if (e instanceof ApiError && e.status === 404) setMissing(true); else setOffline(true); });
   }, [handle, attempt]);
 
@@ -39,6 +40,7 @@ export default function SupportPage() {
           <SupportCard page={page} />
         </>}
         <footer style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 12.5, color: '#6E6861' }}>Pagamento seguro com<Logo h={18} /></footer>
+        <div style={{ textAlign: 'center', marginTop: -14, fontSize: 12.5, color: '#6E6861' }}>Precisas de ajuda? <a href={SUPPORT_TEL} style={{ color: 'inherit', fontWeight: 600 }}>{SUPPORT_PHONE}</a></div>
       </main>
     </div>
   );
@@ -62,7 +64,7 @@ function NotFound() {
   return <section style={{ textAlign: 'center', padding: '60px 0', display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
     <h1 className="display" style={{ margin: 0, fontWeight: 800, fontSize: 32, letterSpacing: '-0.04em' }}>Página não encontrada</h1>
     <p style={{ margin: 0, color: '#57524B' }}>Confirma o link com o criador.</p>
-    <Link to="/" className="btn">Ir para refres.co</Link>
+    <Link to="/" className="btn">Ir para o Refresco</Link>
   </section>;
 }
 

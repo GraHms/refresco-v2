@@ -156,7 +156,7 @@ func (a *App) InviteMember(ctx context.Context, c *Creator, in InviteMemberInput
 	if err != nil {
 		return nil, err
 	}
-	a.notify(ctx, ports.Message{To: d.FormatMZPhone(phone), Kind: "group_invite", Body: c.Account.Name + " convidou-te para o grupo na refres.co. Os teus ganhos ficam no teu saldo."})
+	a.notify(ctx, ports.Message{To: d.FormatMZPhone(phone), Kind: "group_invite", Body: c.Account.Name + " convidou-te para o grupo no Refresco. Os teus ganhos ficam no teu saldo."})
 	v := memberView(*m)
 	return &v, nil
 }

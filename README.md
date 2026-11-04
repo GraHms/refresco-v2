@@ -1,4 +1,4 @@
-# refres.co v2
+# Refresco v2
 
 Fan support platform for Mozambican creators. Fans pay with M-Pesa, e-Mola or card on a single public page; supports accumulate as balances (split across group members); creators request withdrawals that the super admin approves and pays within 72 h. Sign-up is invite only.
 

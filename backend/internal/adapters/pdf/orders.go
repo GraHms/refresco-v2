@@ -53,8 +53,8 @@ func (r Renderer) PaymentOrders(orders []ports.PaymentOrder, by string, at time.
 	f := fpdf.New("P", "mm", "A4", "")
 	f.SetMargins(18, 18, 18)
 	f.SetAutoPageBreak(true, 22)
-	f.SetTitle("Ordens de pagamento refres.co", true)
-	f.SetAuthor("refres.co", true)
+	f.SetTitle("Ordens de pagamento Refresco", true)
+	f.SetAuthor("Refresco", true)
 	f.SetCreationDate(at)
 	p := &doc{Fpdf: f, tr: f.UnicodeTranslatorFromDescriptor(""), loc: loc}
 	f.RegisterImageOptionsReader("logo", fpdf.ImageOptions{ImageType: "PNG"}, bytes.NewReader(logo))
@@ -144,7 +144,7 @@ func (p *doc) header(title, sub string, hasLogo bool) {
 		p.ImageOptions("logo", 18, 15, 0, 11, false, fpdf.ImageOptions{ImageType: "PNG"}, 0, "")
 	} else {
 		p.font("B", 16, brand)
-		p.Text(18, 23, "refres.co")
+		p.Text(18, 23, "Refresco")
 	}
 	p.font("", 8, muted)
 	p.SetXY(110, 15)
@@ -225,7 +225,7 @@ func (p *doc) order(o ports.PaymentOrder, hasLogo bool) {
 	p.section("Beneficiário")
 	p.kv("Membro", strings.TrimSpace(o.MemberName+" · "+o.MemberRole), false)
 	p.kv("Contacto", d.FormatMZPhone(o.MemberPhone), false)
-	p.kv("Conta refres.co", o.AccountName+" (pagarefresco.com/"+o.AccountHandle+")", false)
+	p.kv("Conta Refresco", o.AccountName+" (pagarefresco.com/"+o.AccountHandle+")", false)
 	p.kv("Estado da conta", accStatus[o.AccountStatus], false)
 
 	p.section("Histórico")

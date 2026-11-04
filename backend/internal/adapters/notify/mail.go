@@ -153,23 +153,23 @@ func (n *Mail) smtp(ctx context.Context, m ports.Message) error {
 type mailCopy struct{ Subject, Title, Action string }
 
 var mailCopies = map[string]mailCopy{
-	"password_reset_code":  {"O teu código refres.co", "Recupera a tua palavra-passe", ""},
-	"payout_account_added": {"Nova conta de levantamento na refres.co", "Foi adicionada uma conta de levantamento", ""},
+	"password_reset_code":  {"O teu código Refresco", "Recupera a tua palavra-passe", ""},
+	"payout_account_added": {"Nova conta de levantamento no Refresco", "Foi adicionada uma conta de levantamento", ""},
 	"withdrawal_paid":      {"O teu levantamento foi pago", "O teu levantamento foi pago", ""},
 	"withdrawal_rejected":  {"O teu levantamento foi rejeitado", "O teu levantamento foi rejeitado", ""},
-	"split_approval":       {"Nova divisão para aprovar na refres.co", "Tens uma divisão para aprovar", "Ver a divisão"},
+	"split_approval":       {"Nova divisão para aprovar no Refresco", "Tens uma divisão para aprovar", "Ver a divisão"},
 }
 
 func copyFor(kind string) mailCopy {
 	if c, ok := mailCopies[kind]; ok {
 		return c
 	}
-	return mailCopy{"Notificação da refres.co", "Notificação da refres.co", ""}
+	return mailCopy{"Notificação do Refresco", "Notificação do Refresco", ""}
 }
 
 const (
-	mailFooter = "refres.co, um produto RIHA"
-	mailAuto   = "Este é um email automático. Por favor, não respondas."
+	mailFooter = "Refresco, um produto RIHA"
+	mailAuto   = "Este é um email automático. Para ajuda, liga para +258 84 825 5237."
 )
 
 func buildMail(from string, to *mail.Address, m ports.Message) ([]byte, error) {
@@ -221,7 +221,7 @@ var mailHTML = template.Must(template.New("mail").Parse(`<!doctype html>
 <body style="margin:0;padding:0;background:#F6F1EA;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F6F1EA;"><tr><td align="center" style="padding:32px 16px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#1A1410;">
-<tr><td style="padding:0 4px 18px;font-size:21px;font-weight:800;letter-spacing:-0.4px;color:#1A1410;">refres<span style="color:#D14400;">.co</span></td></tr>
+<tr><td style="padding:0 4px 18px;font-size:21px;font-weight:800;letter-spacing:-0.4px;color:#1A1410;">Refres<span style="color:#D14400;">co</span></td></tr>
 <tr><td style="background:#FFFFFF;border:1px solid #E4DDD1;border-radius:16px;padding:32px 28px;">
 <h1 style="margin:0 0 16px;font-size:23px;line-height:1.25;font-weight:700;letter-spacing:-0.3px;color:#1A1410;">{{.Title}}</h1>
 {{if .Code}}<p style="margin:0 0 14px;font-size:15px;line-height:1.55;color:#57524B;">Usa este código para criar uma nova palavra-passe. Expira em 10 minutos.</p>

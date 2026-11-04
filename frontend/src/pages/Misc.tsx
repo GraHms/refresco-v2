@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { SUPPORT_PHONE, SUPPORT_TEL } from '../lib/support';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CircleCheck, Split, Smartphone, Wallet } from 'lucide-react';
 import { api, ApiError } from '../lib/api';
@@ -9,7 +10,7 @@ import { homeFor } from './Auth';
 
 export function Landing() {
   const { me } = useSession();
-  useEffect(() => { document.title = 'Recebe apoios dos teus fãs por M-Pesa | refres.co'; }, []);
+  useEffect(() => { document.title = 'Recebe apoios dos teus fãs por M-Pesa | Refresco'; }, []);
   const feats = [
     [Smartphone, 'M-Pesa, com e-Mola e cartão em breve', 'O fã escolhe o valor e confirma com o PIN no telemóvel. Sem apps, sem registo.'],
     [Split, 'Divisão automática', 'Grupos e bandas dividem cada apoio na hora, pela percentagem que todos aprovaram.'],
@@ -45,7 +46,7 @@ export function Landing() {
           <Link className="btn btn-dark" style={{ height: 50, padding: '0 20px', borderRadius: 14 }} to="/registar">Criar a minha página</Link>
         </section>
       </main>
-      <footer style={{ textAlign: 'center', padding: '24px 16px 40px', fontSize: 12.5, color: '#6E6861' }}>© 2026 Refres, Lda · Maputo</footer>
+      <footer style={{ textAlign: 'center', padding: '24px 16px 40px', fontSize: 12.5, color: '#6E6861' }}>© 2026 Refres, Lda · Maputo · Ajuda: <a href={SUPPORT_TEL} style={{ color: 'inherit' }}>{SUPPORT_PHONE}</a></footer>
     </div>
   );
 }

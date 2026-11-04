@@ -22,7 +22,7 @@ export function AdminLayout() {
   const [badge, setBadge] = useState(0);
   const [neg, setNeg] = useState(0);
   const reloadBadge = () => api.get<Dash>('/admin/dashboard').then(d => { setBadge(d.pending_count); setNeg(d.negotiated_count); }).catch(() => {});
-  useEffect(() => { reloadBadge(); document.title = 'Admin · refres.co'; }, []);
+  useEffect(() => { reloadBadge(); document.title = 'Admin · Refresco'; }, []);
   if (!me) return null;
   const out = async () => { await logout(); nav('/entrar', { replace: true }); };
   const item = (id: string, label: string, Icon: typeof Ticket, compact: boolean) => (

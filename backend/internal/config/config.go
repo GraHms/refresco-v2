@@ -84,7 +84,7 @@ func Load() (Config, error) {
 		SMTPAddr:          env("SMTP_ADDR", ""),
 		SMTPUsername:      env("SMTP_USERNAME", ""),
 		SMTPPassword:      env("SMTP_PASSWORD", ""),
-		MailFrom:          env("MAIL_FROM", "refres.co <no-reply@rihagateway.com>"),
+		MailFrom:          env("MAIL_FROM", "Refresco <no-reply@rihagateway.com>"),
 		MpesaBaseURL:      env("MPESA_BASE_URL", "https://api.vm.co.mz"),
 		MpesaC2BPort:      env("MPESA_C2B_PORT", "18352"),
 		MpesaQueryPort:    env("MPESA_QUERY_PORT", "18353"),

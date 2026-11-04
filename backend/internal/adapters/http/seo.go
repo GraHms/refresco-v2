@@ -23,8 +23,8 @@ import (
 // the site. nginx asks these routes for each page's details and writes them in.
 
 const (
-	siteName  = "refres.co"
-	siteTitle = "Recebe apoios dos teus fãs por M-Pesa | refres.co"
+	siteName  = "Refresco"
+	siteTitle = "Recebe apoios dos teus fãs por M-Pesa | Refresco"
 	siteDesc  = "Um link para criadores, podcasts e artistas de Moçambique receberem apoios dos fãs por M-Pesa. O fã não precisa de app nem de registo, e levantas em até 72 horas."
 )
 
@@ -44,20 +44,21 @@ func (s *Server) url(path string) string {
 
 func (s *Server) metaFor(c context.Context, path string, q func(string) string) pageMeta {
 	private := func(title string) pageMeta {
-		return pageMeta{title: title + " | refres.co", desc: siteDesc, image: "/og/site.png", alt: siteTitle}
+		return pageMeta{title: title + " | Refresco", desc: siteDesc, image: "/og/site.png", alt: siteTitle}
 	}
 	seg := strings.Split(strings.Trim(path, "/"), "/")
 	switch {
 	case path == "/" || path == "":
 		return pageMeta{title: siteTitle, desc: siteDesc, image: "/og/site.png", alt: siteTitle, path: "/", index: true,
 			ld: []any{
-				map[string]any{"@context": "https://schema.org", "@type": "Organization", "name": siteName, "url": s.url("/"), "logo": s.url("/assets/refres-logo-orange.png")},
+				map[string]any{"@context": "https://schema.org", "@type": "Organization", "name": siteName, "url": s.url("/"), "logo": s.url("/assets/refres-logo-orange.png"),
+					"contactPoint": map[string]any{"@type": "ContactPoint", "telephone": "+258848255237", "contactType": "customer support", "areaServed": "MZ", "availableLanguage": "Portuguese"}},
 				map[string]any{"@context": "https://schema.org", "@type": "WebSite", "name": siteName, "url": s.url("/"), "inLanguage": "pt-MZ"},
 			},
 			noscript: `<h1>Recebe apoios dos teus fãs por M-Pesa</h1><p>` + html.EscapeString(siteDesc) + `</p><p><a href="/registar">Criar a minha página</a></p>`}
 	case seg[0] == "registar":
 		if q("convite") != "" {
-			return pageMeta{title: "Foste convidado para a refres.co", desc: "Cria a tua página e começa a receber apoios dos teus fãs por M-Pesa. A refres.co está aberta só a criadores convidados.", image: "/og/invite.png", alt: "Convite para a refres.co"}
+			return pageMeta{title: "Foste convidado para o Refresco", desc: "Cria a tua página e começa a receber apoios dos teus fãs por M-Pesa. O Refresco está aberto só a criadores convidados.", image: "/og/invite.png", alt: "Convite para o Refresco"}
 		}
 		return private("Criar conta")
 	case seg[0] == "entrar":
@@ -75,12 +76,12 @@ func (s *Server) metaFor(c context.Context, path string, q func(string) string) 
 }
 
 func (s *Server) creatorMeta(c context.Context, handle string) pageMeta {
-	missing := pageMeta{title: "Página não encontrada | refres.co", desc: "Esta página não existe. Confirma o link com o criador.", image: "/og/site.png", alt: siteTitle}
+	missing := pageMeta{title: "Página não encontrada | Refresco", desc: "Esta página não existe. Confirma o link com o criador.", image: "/og/site.png", alt: siteTitle}
 	a, err := s.app.PublicPage(c, handle)
 	if err != nil {
 		return missing
 	}
-	title := "Apoia " + a.Name + " com um refresco | refres.co"
+	title := "Apoia " + a.Name + " com um refresco | Refresco"
 	desc := strings.TrimSpace(a.Bio)
 	const how = "Apoia por M-Pesa: sem app nem registo, confirmas com o teu PIN."
 	if desc == "" {
@@ -130,7 +131,7 @@ func (m pageMeta) head(s *Server) string {
 	tag(`<meta property="og:site_name" content="%s">`, siteName)
 	tag(`<meta property="og:locale" content="pt_MZ">`)
 	tag(`<meta property="og:type" content="website">`)
-	tag(`<meta property="og:title" content="%s">`, e(strings.TrimSuffix(m.title, " | refres.co")))
+	tag(`<meta property="og:title" content="%s">`, e(strings.TrimSuffix(m.title, " | Refresco")))
 	tag(`<meta property="og:description" content="%s">`, e(trimDesc(m.desc)))
 	if m.path != "" {
 		tag(`<meta property="og:url" content="%s">`, e(s.url(m.path)))
@@ -228,7 +229,7 @@ func (s *Server) ogImage(c *gin.Context) {
 	case path == "site":
 		card = ogcard.Card{Title: "Os teus fãs pagam-te um refresco", Body: "Um link para receberes apoios por M-Pesa. Sem app e sem registo para o fã.", Big: "Para criadores de Moçambique", Foot: "pagarefresco.com"}
 	case path == "invite":
-		card = ogcard.Card{Kicker: "Foste convidado", Title: "Cria a tua página na refres.co", Body: "Recebe apoios dos teus fãs por M-Pesa.", Foot: "pagarefresco.com"}
+		card = ogcard.Card{Kicker: "Foste convidado", Title: "Cria a tua página no Refresco", Body: "Recebe apoios dos teus fãs por M-Pesa.", Foot: "pagarefresco.com"}
 	case strings.HasPrefix(path, "p/"):
 		handle := strings.TrimPrefix(path, "p/")
 		a, err := s.app.PublicPage(c.Request.Context(), handle)

@@ -177,7 +177,7 @@ func (a *App) CheckInvite(ctx context.Context, code string) (InviteCheck, error)
 	if !inv.Usable() {
 		return InviteCheck{Reason: "not_found"}, nil
 	}
-	return InviteCheck{Valid: true, Inviter: "Equipa refres.co"}, nil
+	return InviteCheck{Valid: true, Inviter: "Equipa Refresco"}, nil
 }
 
 func (a *App) HandleAvailable(ctx context.Context, handle, exceptAccountID string) (bool, string, error) {
@@ -345,7 +345,7 @@ func (a *App) ForgotPassword(ctx context.Context, identifier string) error {
 	if err := a.Store.Resets().Create(ctx, r); err != nil {
 		return err
 	}
-	msg := ports.Message{To: u.Email, Kind: "password_reset_code", Body: "O teu código refres.co: " + code + ". Expira em 10 minutos.", Code: code}
+	msg := ports.Message{To: u.Email, Kind: "password_reset_code", Body: "O teu código Refresco: " + code + ". Expira em 10 minutos.", Code: code}
 	if !strings.Contains(identifier, "@") {
 		phone := msg
 		phone.To = d.FormatMZPhone(u.Phone)
