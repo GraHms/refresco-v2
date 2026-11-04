@@ -1,6 +1,8 @@
 package config
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"os"
 	"strconv"
@@ -24,6 +26,7 @@ type Config struct {
 	MockAutoConfirm   time.Duration
 	MockWebhookSecret []byte
 	AllowSimulate     bool
+	Sandbox           bool
 	AdminEmail        string
 	AdminPassword     string
 	TimeZone          string
@@ -51,7 +54,7 @@ func list(v string) []string {
 
 func Load() (Config, error) {
 	c := Config{
-		Env:               env("APP_ENV", "development"),
+		Env:               env("APP_ENV", "production"),
 		Addr:              env("HTTP_ADDR", ":8080"),
 		DatabaseURL:       env("DATABASE_URL", "postgres://refresco:refresco@localhost:5432/refresco?sslmode=disable"),
 		JWTSecret:         []byte(env("JWT_SECRET", "")),
@@ -64,6 +67,9 @@ func Load() (Config, error) {
 		AdminEmail:        env("ADMIN_EMAIL", ""),
 		AdminPassword:     env("ADMIN_PASSWORD", ""),
 		TimeZone:          env("TIME_ZONE", "Africa/Maputo"),
+	}
+	if c.Env != "production" && c.Env != "development" {
+		return c, errors.New("APP_ENV must be production or development")
 	}
 	var err error
 	if c.DBMaxConns, err = strconv.Atoi(env("DB_MAX_CONNS", "20")); err != nil {
@@ -88,22 +94,35 @@ func Load() (Config, error) {
 		if !c.CookieSecure {
 			return c, errors.New("COOKIE_SECURE must be true in production")
 		}
-		if c.PaymentsProvider == "mock" && len(c.MockWebhookSecret) < 32 {
-			return c, errors.New("MOCK_WEBHOOK_SECRET must be at least 32 bytes in production")
+		if c.PaymentsProvider == "mock" {
+			if env("PAYMENTS_ALLOW_MOCK_IN_PRODUCTION", "") != "true" {
+				return c, errors.New("the mock payment gateway credits balances without real payments; refusing to run it in production (set PAYMENTS_ALLOW_MOCK_IN_PRODUCTION=true only for a staging environment)")
+			}
+			if len(c.MockWebhookSecret) < 32 {
+				return c, errors.New("MOCK_WEBHOOK_SECRET must be at least 32 bytes in production")
+			}
+		}
+		if c.AllowSimulate {
+			return c, errors.New("PAYMENTS_ALLOW_SIMULATE must be false in production")
 		}
 	} else {
-		if len(c.JWTSecret) == 0 {
-			c.JWTSecret = []byte("dev-only-jwt-secret-change-me-0123456789")
-		}
-		if len(c.AppSecret) == 0 {
-			c.AppSecret = []byte("dev-only-app-secret-change-me-0123456789")
-		}
-		if len(c.MockWebhookSecret) == 0 {
-			c.MockWebhookSecret = []byte("dev-only-webhook-secret")
+		for _, sec := range []*[]byte{&c.JWTSecret, &c.AppSecret, &c.MockWebhookSecret} {
+			if len(*sec) == 0 {
+				*sec = randomSecret()
+			}
 		}
 	}
+	c.Sandbox = c.PaymentsProvider == "mock"
 	if c.PaymentsProvider != "mock" {
 		return c, errors.New("unsupported PAYMENTS_PROVIDER: " + c.PaymentsProvider)
 	}
 	return c, nil
+}
+
+func randomSecret() []byte {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		panic(err)
+	}
+	return []byte(hex.EncodeToString(b))
 }

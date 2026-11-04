@@ -37,7 +37,7 @@ func run(log *slog.Logger) error {
 		return fmt.Errorf("refusing to seed a production database")
 	}
 	cfg.AllowSimulate = true
-	a, _, err := bootstrap.Build(cfg, log)
+	a, db, err := bootstrap.Build(cfg, log)
 	if err != nil {
 		return err
 	}
@@ -50,6 +50,13 @@ func run(log *slog.Logger) error {
 	if _, err := st.Accounts().ByHandle(ctx, "tupratu"); err == nil {
 		log.Info("demo data already present")
 		return nil
+	}
+	var users int64
+	if err := db.Table("users").Count(&users).Error; err != nil {
+		return err
+	}
+	if users > 0 && os.Getenv("SEED_FORCE") != "true" {
+		return fmt.Errorf("database already has %d users; demo data is only loaded into an empty database (SEED_FORCE=true overrides)", users)
 	}
 	for _, inv := range []d.Invite{
 		{Code: "REFRES-BETA", Note: "Beta aberta", MaxUses: 10, FeeBPS: 1500},
