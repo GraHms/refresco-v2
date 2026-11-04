@@ -16,7 +16,7 @@ make api             # API on :8080
 make web             # SPA on :5173, proxies /api to :8080
 ```
 
-Demo logins after `make seed`: creator `cardo@tupratu.co.mz` / `tupratu-2026`; super admin `admin@refres.co` / `admin-refres-2026`. Public page: `/tupratu`. Invite codes: `REFRES-BETA`, `MAPUTO-01`.
+`make seed` only runs in development mode and only against an empty database. Demo logins after `make seed`: creator `cardo@tupratu.co.mz` / `tupratu-2026`; super admin `admin@refres.co` / `admin-refres-2026`. Public page: `/tupratu`. Invite codes: `REFRES-BETA`, `MAPUTO-01`.
 
 ## Production
 
@@ -26,7 +26,7 @@ make docker-build
 make up                # db + api + web; web listens on $WEB_PORT (default 8080)
 ```
 
-Put a TLS terminating load balancer in front of `web`. The API refuses to start in `APP_ENV=production` without strong secrets and `COOKIE_SECURE=true`. The super admin is created on first boot from `ADMIN_EMAIL` / `ADMIN_PASSWORD`; remove the password from the environment afterwards.
+Put a TLS terminating load balancer in front of `web`. `APP_ENV` defaults to `production`; development mode must be asked for explicitly (`make api` does). In production the API refuses to start without strong secrets, with `COOKIE_SECURE=false`, with the payment simulator on, or with the mock gateway, unless `PAYMENTS_ALLOW_MOCK_IN_PRODUCTION=true` is set for a staging stack. `PUBLIC_URL` must be the exact public origin: state-changing requests from any other origin are rejected. The super admin is created on first boot from `ADMIN_EMAIL` / `ADMIN_PASSWORD`; remove the password from the environment afterwards.
 
 `make help` lists all targets. `make test` runs `go vet`, the race-enabled Go tests and the TypeScript check. Set `TEST_DATABASE_URL` to also run the Postgres integration test (each run uses a throwaway schema).
 
@@ -46,6 +46,13 @@ Put a TLS terminating load balancer in front of `web`. The API refuses to start 
 **Payments.** `PAYMENTS_PROVIDER=mock` is the only gateway for now. Wallet requests confirm after `MOCK_AUTO_CONFIRM`; numbers ending in `0000` fail (insufficient funds), `9999` never confirm. Card OTP `000000` is rejected. The SPA never sends card numbers to the API, only brand, last four digits and a gateway token. A signed webhook endpoint (`POST /api/v1/webhooks/payments`, HMAC-SHA256 in `X-Mock-Signature`) is in place for real providers. `PAYMENTS_ALLOW_SIMULATE` (off in production) enables the "tap the phone to confirm" sandbox shortcut.
 
 ## Security
+
+- Login locks an account for 15 minutes after 10 wrong passwords. Password reset allows 5 guesses per code and, per account and day, at most 5 codes and 10 wrong guesses.
+- Sessions are stored server side: logging out revokes that session, a password reset revokes all of them.
+- Adding a payout account requires the password and sends an SMS and email to the owner; the admin view flags the first withdrawal to a new destination.
+- Unpaid supports never show their name or message to the creator. Payment prompts are capped at 5 per phone number per 15 minutes and 3 resends per payment.
+- Invite codes carry 10 random characters and the check endpoint gives the same answer for unknown, used and revoked codes.
+- Fonts are self hosted; the SPA makes no third-party requests. Split approval links carry the token in the URL fragment, which is never sent to servers or logs.
 
 - Session JWT in an `HttpOnly`, `Secure`, `SameSite=Strict` cookie scoped to `/api`; token version is bumped on password reset, revoking old sessions.
 - Mutating requests must be JSON and, when `ALLOWED_ORIGINS` is set, come from an allowed origin.

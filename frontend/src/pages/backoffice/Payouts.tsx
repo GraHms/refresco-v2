@@ -164,14 +164,15 @@ function WithdrawModal({ w, onClose, onDone }: { w: WalletV; onClose: () => void
 
 function AddAccount({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
   const [kind, setKind] = useState<'mpesa' | 'emola' | 'nib'>('mpesa');
-  const [num, setNum] = useState(''); const [bank, setBank] = useState(BANKS[0]); const [holder, setHolder] = useState(''); const [main, setMain] = useState(false);
+  const [num, setNum] = useState(''); const [bank, setBank] = useState(BANKS[0]); const [holder, setHolder] = useState(''); const [pw, setPw] = useState(''); const [main, setMain] = useState(false);
   const [err, setErr] = useState(''); const [busy, setBusy] = useState(false);
   const valid = kind === 'nib' ? num.length === 21 && holder.trim().length >= 3 : num.length === 9 && walletOf(num) === kind;
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (!pw) { setErr('Escreve a tua palavra-passe.'); return; }
     if (!valid) { setErr(kind === 'nib' ? (num.length !== 21 ? 'O NIB tem 21 dígitos.' : 'Escreve o nome do titular da conta.') : 'O número não corresponde à carteira escolhida.'); return; }
     setBusy(true); setErr('');
-    try { await api.post('/backoffice/wallet/accounts', { kind, number: num, bank: kind === 'nib' ? bank : '', holder: kind === 'nib' ? holder : '', is_main: main }); onDone(); }
+    try { await api.post('/backoffice/wallet/accounts', { kind, number: num, bank: kind === 'nib' ? bank : '', holder: kind === 'nib' ? holder : '', is_main: main, password: pw }); onDone(); }
     catch (x) { setErr(x instanceof ApiError ? x.message : 'Algo correu mal.'); } finally { setBusy(false); }
   }
   return (
@@ -185,6 +186,8 @@ function AddAccount({ onClose, onDone }: { onClose: () => void; onDone: () => vo
           <label className="field"><span>Titular da conta</span><input className="input" value={holder} onChange={e => setHolder(e.target.value.slice(0, 80))} placeholder="Nome como aparece no banco" autoComplete="name" /></label>
         </> : <label className="field"><span>Número {KIND[kind][0]}</span>
           <span className="affix"><span className="pre">+258</span><input type="tel" className="mono" value={fmtPhone(num)} onChange={e => setNum(digits(e.target.value, 9))} placeholder={kind === 'mpesa' ? '84 123 4567' : '86 123 4567'} /></span></label>}
+        <label className="field"><span>Confirma com a tua palavra-passe</span><input className="input" type="password" autoComplete="current-password" value={pw} onChange={e => setPw(e.target.value)} /></label>
+        <div style={{ fontSize: 12.5, color: '#6E6861', marginTop: -8 }}>Por segurança, avisamos-te por SMS e email sempre que uma conta nova é adicionada.</div>
         <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13.5 }}><input type="checkbox" checked={main} onChange={e => setMain(e.target.checked)} />Usar como conta principal</label>
         {err && <div className="err-box"><CircleAlert size={15} />{err}</div>}
         <button type="submit" className="btn btn-primary" style={{ height: 50, borderRadius: 14 }} disabled={busy}>Adicionar conta</button>

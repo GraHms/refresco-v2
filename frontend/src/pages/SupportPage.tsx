@@ -29,6 +29,7 @@ export default function SupportPage() {
         <Link to="/registar" className="btn" style={{ height: 38, padding: '0 13px', fontSize: 13.5 }}>Cria a tua página<ArrowUpRight size={15} /></Link>
       </header>
       <main style={{ maxWidth: 600, margin: '0 auto', padding: 'clamp(12px,3vw,32px) 20px 40px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+        {page?.sandbox && <div role="status" style={{ padding: '10px 14px', borderRadius: 14, background: '#FBEFD9', color: '#6B3F00', fontSize: 13.5, textAlign: 'center' }}><b>Modo de teste.</b> Nenhum pagamento é real e nada é cobrado.</div>}
         {missing ? <NotFound /> : !page ? <Loading /> : <>
           <Profile page={page} />
           <SupportCard page={page} />
@@ -310,6 +311,7 @@ function SupportCard({ page }: { page: Page }) {
           <div style={{ marginTop: -8, textAlign: 'center', fontSize: 12.5, lineHeight: 1.45, color: '#6E6861' }}>
             {isWallet ? 'Confirmas com o PIN no teu telemóvel. Nunca te pedimos o PIN aqui.' : 'Visa e Mastercard. O teu banco pode pedir um código de confirmação.'}
           </div>
+          <div style={{ marginTop: -10, textAlign: 'center', fontSize: 12, lineHeight: 1.45, color: '#8A837A' }}>{isWallet ? `${page.name} vê o valor, o teu nome, a mensagem e o teu número, para te poder agradecer.` : `${page.name} vê o valor, o teu nome e a mensagem. Não partilhamos os dados do cartão.`}</div>
         </div>
       )}
 
@@ -334,7 +336,7 @@ function SupportCard({ page }: { page: Page }) {
             <div className="display" style={{ fontWeight: 700, fontSize: 22, lineHeight: 1.12, letterSpacing: '-0.025em' }}>{failed ? 'O pagamento não foi concluído' : 'Confirma no teu telemóvel'}</div>
             <p style={{ margin: '8px auto 0', maxWidth: 320, fontSize: 14.5, color: '#57524B' }}>
               {failed ? <>{sup.fail_reason || 'O pedido expirou'}. Podes reenviar o pedido ou voltar.</> :
-                <>Enviámos um pedido de <b style={{ color: '#1A1410' }}>{mtN(sup.amount)} MT</b> para <span className="mono" style={{ color: '#1A1410', whiteSpace: 'nowrap' }}>+258 {fmtPhone(sup.phone || '')}</span>. Insere o teu PIN {CHN[sup.channel as 'mpesa']}.</>}
+                <>Enviámos um pedido de <b style={{ color: '#1A1410' }}>{mtN(sup.amount)} MT</b> para <span className="mono" style={{ color: '#1A1410', whiteSpace: 'nowrap' }}>+258 {fmtPhone(phone)}</span>. Insere o teu PIN {CHN[sup.channel as 'mpesa']}.</>}
             </p>
           </div>
           {!failed && <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -396,7 +398,7 @@ function SupportCard({ page }: { page: Page }) {
           </div>}
           <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 7, fontSize: 13 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}><span style={{ color: '#6E6861' }}>Referência</span><span className="mono">{sup.ref}</span></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}><span style={{ color: '#6E6861' }}>Pagamento</span><span className="mono">{sup.channel === 'card' ? `${brandName} ···· ${card.slice(-4)}` : `${CHN[sup.channel as 'mpesa']} · ${fmtPhone(sup.phone || '')}`}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}><span style={{ color: '#6E6861' }}>Pagamento</span><span className="mono">{sup.channel === 'card' ? `${brandName} ···· ${card.slice(-4)}` : `${CHN[sup.channel as 'mpesa']} · ${fmtPhone(phone)}`}</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}><span style={{ color: '#6E6861' }}>Data</span><span className="mono">{dateTime(sup.confirmed_at || sup.created_at)}</span></div>
           </div>
           <button type="button" className="btn" style={{ width: '100%', height: 50, borderRadius: 16, fontSize: 15 }}

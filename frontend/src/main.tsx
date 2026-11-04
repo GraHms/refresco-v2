@@ -1,6 +1,9 @@
 import { StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import '@fontsource-variable/archivo/wdth.css';
+import '@fontsource-variable/instrument-sans/wdth.css';
+import '@fontsource-variable/geist-mono';
 import './styles.css';
 import { SessionProvider, useSession } from './lib/session';
 import { ToastProvider } from './components/ui';
@@ -43,7 +46,7 @@ createRoot(document.getElementById('root')!).render(
               <Route path="/entrar" element={<Auth />} />
               <Route path="/registar" element={<Auth />} />
               <Route path="/recuperar" element={<Auth />} />
-              <Route path="/aprovar/:token" element={<SplitApproval />} />
+              <Route path="/aprovar" element={<SplitApproval />} />
               <Route path="/painel" element={<Guard role="creator"><BackofficeLayout /></Guard>}>
                 <Route index element={<Navigate to="visao-geral" replace />} />
                 <Route path="visao-geral" element={<Overview />} />

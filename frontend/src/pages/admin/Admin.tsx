@@ -58,7 +58,7 @@ export function AdminLayout() {
           </div>
         )}
         <main style={{ flex: 1, minWidth: 0, padding: '28px clamp(14px,3vw,40px) 60px' }}>
-          <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}><Outlet context={{ reloadBadge } satisfies Ctx} /></div>
+          <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>{me.sandbox && <div role="status" style={{ padding: '12px 16px', borderRadius: 16, background: '#FDE8E4', color: '#7A1F14', fontSize: 13.5 }}><b>Modo de teste.</b> Os pagamentos são simulados. Não transfiras dinheiro real para estes levantamentos.</div>}<Outlet context={{ reloadBadge } satisfies Ctx} /></div>
         </main>
       </div>
     </div>
@@ -318,7 +318,7 @@ export function AdminWithdrawals() {
   </>;
 }
 
-interface WDetail extends AdminW { member_role: string; member_phone: string; member_pct: number; account_handle: string; owner_name: string; owner_email: string; owner_phone: string; recent: WithdrawalView[]; paid_total: number }
+interface WDetail extends AdminW { member_role: string; member_phone: string; member_pct: number; account_handle: string; owner_name: string; owner_email: string; owner_phone: string; recent: WithdrawalView[]; paid_total: number; dest_added_at?: string; dest_first_use: boolean }
 
 function CopyRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   const toast = useToast();
@@ -356,6 +356,11 @@ function WithdrawalDrawer({ id, version, onClose, busy, onApprove, onComplete, o
             <div style={{ marginTop: 6, fontSize: 13, color: closed ? '#6E6861' : h < 0 || h <= 24 ? '#B42318' : '#9A5B00', fontWeight: closed ? 400 : 600 }}>{closed ? `Pedido a ${shortDateTime(w.created_at)}` : h < 0 ? `Atrasado ${-h} h · prazo ${shortDateTime(w.due_at)}` : `Faltam ${h} h · pagar até ${shortDateTime(w.due_at)}`}</div></div>
         </div>
         {flag && <div style={{ display: 'flex', gap: 10, padding: '12px 14px', borderRadius: 14, background: '#FDE8E4', color: '#7A1F14', fontSize: 13 }}><TriangleAlert size={16} style={{ marginTop: 1 }} /><span>{w.account_status === 'suspended' ? 'A conta está suspensa. Não pagues este pedido.' : 'A conta ainda não foi verificada. Verifica-a em Contas antes de aprovar.'}</span></div>}
+        {!closed && w.dest_first_use && (() => {
+          const hours = w.dest_added_at ? (new Date(w.created_at).getTime() - new Date(w.dest_added_at).getTime()) / 3600000 : null;
+          const recent = hours != null && hours < 72;
+          return <div style={{ display: 'flex', gap: 10, padding: '12px 14px', borderRadius: 14, background: recent ? '#FDE8E4' : '#FBEFD9', color: recent ? '#7A1F14' : '#6B3F00', fontSize: 13 }}><TriangleAlert size={16} style={{ marginTop: 1 }} /><span><b>Primeiro levantamento para este destino.</b> {recent ? `A conta foi adicionada ${hours! < 1 ? 'menos de 1 hora' : Math.round(hours!) + ' h'} antes do pedido. Confirma com o criador por telefone antes de pagar.` : 'Confirma os dados antes de pagar.'}</span></div>;
+        })()}
         {nib && !w.dest_holder && !closed && <div style={{ display: 'flex', gap: 10, padding: '12px 14px', borderRadius: 14, background: '#FBEFD9', color: '#6B3F00', fontSize: 13 }}><TriangleAlert size={16} style={{ marginTop: 1 }} /><span>O titular da conta bancária não foi indicado. Confirma com o criador antes de transferir.</span></div>}
         {section('Dados para pagamento')}
         <div style={box}>

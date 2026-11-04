@@ -93,6 +93,7 @@ export default function BackofficeLayout() {
           )}
           <main style={{ flex: 1, minWidth: 0, padding: mobile ? '18px 14px 110px' : '28px clamp(16px,3vw,40px) 110px' }}>
             <div style={{ maxWidth: 1180, margin: '0 auto' }}>
+              {me.sandbox && <Notice>Modo de teste: os pagamentos são simulados e o saldo não é dinheiro real.</Notice>}
               {me.account_status === 'pending' && !loc.pathname.endsWith('/pagina') && <Notice>A tua conta está por verificar. Já podes receber apoios; os levantamentos são aprovados depois da verificação.</Notice>}
               {me.account_status === 'suspended' && <Notice red>A tua conta está suspensa. A página não recebe apoios. Fala com a equipa refres.co.</Notice>}
               <Outlet />

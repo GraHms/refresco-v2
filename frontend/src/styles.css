@@ -2,7 +2,7 @@
   --orange: #FF6A1A; --brand: #D14400; --brand-dk: #A83700; --ink: #1A1410; --cream: #F6EFE6; --paper: #FBF7F1;
   --line: #E4DDD1; --line2: #EFE7DC; --line3: #F0EBE3; --muted: #57524B; --muted2: #6E6861; --faint: #A0988D;
   --ok: #17803D; --ok-bg: #E3F3E8; --warn: #9A5B00; --warn-bg: #FBEFD9; --err: #B42318; --err-bg: #FDE8E4;
-  --display: 'Archivo', sans-serif; --sans: 'Instrument Sans', system-ui, sans-serif; --mono: 'Geist Mono', ui-monospace, monospace;
+  --display: 'Archivo Variable', 'Archivo', sans-serif; --sans: 'Instrument Sans Variable', 'Instrument Sans', system-ui, sans-serif; --mono: 'Geist Mono Variable', 'Geist Mono', ui-monospace, monospace;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--cream); color: var(--ink); -webkit-font-smoothing: antialiased; }

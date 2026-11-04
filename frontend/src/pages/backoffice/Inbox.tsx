@@ -23,7 +23,7 @@ export function SupportRow({ s, compact, onOpen }: { s: SupportView; compact?: b
           <span style={{ flex: 'none', width: 7, height: 7, borderRadius: '50%', background: !s.read && s.status === 'confirmed' ? '#D14400' : 'transparent' }} />
           <span style={{ flex: 'none', fontSize: 12.5, color: '#6E6861' }}>{relative(s.created_at)}</span>
         </span>
-        <span style={{ display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: s.message ? '#57524B' : '#9A938A', fontStyle: s.message ? 'normal' : 'italic' }}>{s.message || 'Sem mensagem'}</span>
+        <span style={{ display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: s.message ? '#57524B' : '#9A938A', fontStyle: s.message ? 'normal' : 'italic' }}>{s.hidden ? 'Pagamento não concluído' : s.message || 'Sem mensagem'}</span>
       </span>
       {!compact && <span className="badge" style={{ background: CH[s.channel].bg, color: CH[s.channel].fg }}>{CH[s.channel].name}</span>}
       <span className="display" style={{ flex: 'none', minWidth: 76, textAlign: 'right', fontWeight: 700, fontSize: 15, whiteSpace: 'nowrap' }}>{mt(s.amount)}</span>
@@ -88,8 +88,8 @@ export default function Inbox() {
                     <span style={{ flex: 'none', width: 8, height: 8, borderRadius: '50%', background: unread ? '#D14400' : 'transparent' }} />
                     <span className="avatar" style={{ width: 40, height: 40, borderRadius: 13, background: bg, color: fg, fontSize: 13 }}>{ini(s.name || 'Anónimo')}</span>
                     <span style={{ minWidth: 0, flex: 1, lineHeight: 1.35 }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>{s.net && NETS[s.net] && <Brand name={NETS[s.net]} size={13} />}<span style={{ fontWeight: unread ? 700 : 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name || 'Anónimo'}</span><span style={{ flex: 'none', fontSize: 12.5, color: '#6E6861', whiteSpace: 'nowrap' }}>{relative(s.created_at)}</span></span>
-                      <span style={{ display: 'block', color: s.message ? '#57524B' : '#9A938A', fontStyle: s.message ? 'normal' : 'italic', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.message || 'Sem mensagem'}</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>{s.net && NETS[s.net] && <Brand name={NETS[s.net]} size={13} />}<span style={{ fontWeight: unread ? 700 : 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.hidden ? 'Apoio não pago' : s.name || 'Anónimo'}</span><span style={{ flex: 'none', fontSize: 12.5, color: '#6E6861', whiteSpace: 'nowrap' }}>{relative(s.created_at)}</span></span>
+                      <span style={{ display: 'block', color: s.message ? '#57524B' : '#9A938A', fontStyle: s.message ? 'normal' : 'italic', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.hidden ? 'Pagamento não concluído' : s.message || 'Sem mensagem'}</span>
                     </span>
                   </span>
                   <span style={{ lineHeight: 1.3 }}><span className="display" style={{ display: 'block', fontWeight: 700, fontSize: 15, whiteSpace: 'nowrap' }}>{mt(s.amount)}</span><span style={{ display: 'block', fontSize: 12, color: '#6E6861' }}>{s.preset ? 'Valor sugerido' : 'Valor livre'}</span></span>
@@ -110,12 +110,12 @@ export default function Inbox() {
                 <span style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }}>
                   <span className="avatar" style={{ width: 38, height: 38, borderRadius: 12, background: bg, color: fg, fontSize: 12.5 }}>{ini(s.name || 'Anónimo')}</span>
                   <span style={{ flex: 1, minWidth: 0, lineHeight: 1.3 }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>{s.net && NETS[s.net] && <Brand name={NETS[s.net]} size={12} />}<span style={{ fontWeight: unread ? 700 : 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name || 'Anónimo'}</span><span style={{ flex: 'none', width: 7, height: 7, borderRadius: '50%', background: unread ? '#D14400' : 'transparent' }} /></span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>{s.net && NETS[s.net] && <Brand name={NETS[s.net]} size={12} />}<span style={{ fontWeight: unread ? 700 : 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.hidden ? 'Apoio não pago' : s.name || 'Anónimo'}</span><span style={{ flex: 'none', width: 7, height: 7, borderRadius: '50%', background: unread ? '#D14400' : 'transparent' }} /></span>
                     <span style={{ display: 'block', fontSize: 12, color: '#6E6861' }}>{relative(s.created_at)}</span>
                   </span>
                   <span className="display" style={{ fontWeight: 800, fontSize: 17, whiteSpace: 'nowrap' }}>{mt(s.amount)}</span>
                 </span>
-                <span style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', fontSize: 14, lineHeight: 1.45, color: s.message ? '#57524B' : '#9A938A', fontStyle: s.message ? 'normal' : 'italic' }}>{s.message || 'Sem mensagem'}</span>
+                <span style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', fontSize: 14, lineHeight: 1.45, color: s.message ? '#57524B' : '#9A938A', fontStyle: s.message ? 'normal' : 'italic' }}>{s.hidden ? 'Pagamento não concluído' : s.message || 'Sem mensagem'}</span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', width: '100%' }}>
                   <span className="badge" style={{ height: 24, fontSize: 12, background: CH[s.channel].bg, color: CH[s.channel].fg }}>{CH[s.channel].name}</span>
                   <Badge st={SUP_ST[s.status]} style={{ height: 24, fontSize: 12 }} />
@@ -176,7 +176,7 @@ function Detail({ id, onClose, onChanged }: { id: string; onClose: () => void; o
             <span style={{ position: 'absolute', left: 0, top: 18, bottom: 18, width: 3, borderRadius: '0 3px 3px 0', background: '#FF6A1A' }} />
             <div style={{ fontSize: 17, lineHeight: 1.5, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{s.message}</div>
           </div>
-        ) : <div style={{ padding: '14px 16px', borderRadius: 16, background: '#F8F5EF', color: '#6E6861', fontStyle: 'italic' }}>Este apoio veio sem mensagem.</div>}
+        ) : <div style={{ padding: '14px 16px', borderRadius: 16, background: '#F8F5EF', color: '#6E6861', fontStyle: 'italic' }}>{s.hidden ? 'O nome e a mensagem só aparecem quando o pagamento é confirmado.' : 'Este apoio veio sem mensagem.'}</div>}
         {(s.status === 'failed' || s.status === 'expired') && <div style={{ display: 'flex', gap: 10, padding: '12px 14px', borderRadius: 14, background: '#FDE9DC', color: '#7A2E0A', fontSize: 13 }}><CircleAlert size={16} style={{ marginTop: 1 }} /><span><b>{s.fail_reason || 'Falhou'}.</b> O pagamento não foi concluído e nada foi dividido.</span></div>}
         {s.status === 'pending' && <div style={{ display: 'flex', gap: 10, padding: '12px 14px', borderRadius: 14, background: '#FBEFD9', color: '#6B3F00', fontSize: 13 }}><Hourglass size={16} style={{ marginTop: 1 }} /><span>{s.channel === 'card' ? 'O banco do fã ainda não confirmou o pagamento (3-D Secure).' : 'O fã ainda não confirmou com o PIN.'}</span></div>}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

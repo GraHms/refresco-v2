@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ArrowRight, CircleCheck, Split, Smartphone, Wallet } from 'lucide-react';
 import { api, ApiError } from '../lib/api';
 import { SEG } from '../lib/format';
@@ -53,13 +53,17 @@ export function Landing() {
 interface Approval { account: string; member: string; splits: { id: string; name: string; pct: number }[]; approved: boolean; applied?: boolean }
 
 export function SplitApproval() {
-  const { token = '' } = useParams();
+  const [token] = useState(() => decodeURIComponent(location.hash.slice(1)));
   const [a, setA] = useState<Approval | null>(null);
   const [err, setErr] = useState(''); const [done, setDone] = useState<Approval | null>(null); const [busy, setBusy] = useState(false);
-  useEffect(() => { api.get<Approval>('/split-approvals/' + encodeURIComponent(token)).then(setA).catch(e => setErr(e instanceof ApiError ? e.message : 'Link inválido.')); }, [token]);
+  useEffect(() => {
+    try { history.replaceState(null, '', '/aprovar'); } catch { /* ignore */ }
+    if (!token) { setErr('Link inválido.'); return; }
+    api.post<Approval>('/split-approvals/lookup', { token }).then(setA).catch(e => setErr(e instanceof ApiError ? e.message : 'Link inválido.'));
+  }, [token]);
   async function approve() {
     setBusy(true);
-    try { setDone(await api.post<Approval>('/split-approvals/' + encodeURIComponent(token))); } catch (e) { setErr(e instanceof ApiError ? e.message : 'Algo correu mal.'); } finally { setBusy(false); }
+    try { setDone(await api.post<Approval>('/split-approvals/approve', { token })); } catch (e) { setErr(e instanceof ApiError ? e.message : 'Algo correu mal.'); } finally { setBusy(false); }
   }
   return (
     <div style={{ minHeight: '100vh', background: '#F6EFE6', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px 20px' }}>
