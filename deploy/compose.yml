@@ -1,0 +1,44 @@
+# refres.co on a shared server. Lives in /opt/refresco next to its .env. Postgres
+# runs on the server itself, and the server's Caddy reaches the web container
+# over the shared apps network. The web service has its own name there because
+# the network is shared, and api stays off it for the same reason.
+
+name: refresco
+
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "10m", max-file: "5" }
+
+services:
+  api:
+    image: refresco/api:${IMAGE_TAG:?set IMAGE_TAG in .env}
+    restart: unless-stopped
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      DATABASE_URL: postgres://refresco:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@host.docker.internal:5432/refresco?sslmode=disable
+      TRUSTED_PROXIES: 172.30.1.0/24,${APPS_SUBNET:-172.30.3.0/24}
+    read_only: true
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    stop_grace_period: 30s
+    networks: [private]
+    logging: *logging
+
+  refresco-web:
+    image: refresco/web:${IMAGE_TAG:?set IMAGE_TAG in .env}
+    restart: unless-stopped
+    depends_on: [api]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    networks: [private, apps]
+    logging: *logging
+
+networks:
+  private:
+    ipam:
+      config:
+        - subnet: 172.30.1.0/24
+  apps:
+    external: true
