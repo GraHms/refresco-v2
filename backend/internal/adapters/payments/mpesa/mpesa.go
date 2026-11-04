@@ -76,6 +76,9 @@ type payment struct {
 	state     state
 	result    ports.PaymentState
 	lastQuery time.Time
+	// timedOut: M-Pesa said the customer didn't answer, so they can try again as
+	// soon as it has no record. Later checks still catch a late confirmation.
+	timedOut bool
 }
 
 type Gateway struct {
@@ -269,7 +272,7 @@ func (g *Gateway) outcome(ref string, status int, out response) *payment {
 	// These don't say whether the customer paid.
 	if out.ResponseCode == "INS-0" || ambiguous[out.ResponseCode] {
 		g.cfg.Log.Warn("mpesa outcome unclear", "ref", ref, "code", out.ResponseCode, "http", status)
-		return &payment{state: unknown}
+		return &payment{state: unknown, timedOut: out.ResponseCode == "INS-9"}
 	}
 	msg, known := customerMessages[out.ResponseCode]
 	if !known {
@@ -323,6 +326,7 @@ func (g *Gateway) Status(ctx context.Context, ref string) (ports.PaymentState, e
 	if due {
 		p.lastQuery = g.now()
 	}
+	timedOut := p.timedOut
 	g.mu.Unlock()
 
 	if due {
@@ -336,7 +340,7 @@ func (g *Gateway) Status(ctx context.Context, ref string) (ports.PaymentState, e
 			return st, nil
 		}
 	}
-	if g.pastAnswering(ref) {
+	if timedOut || g.pastAnswering(ref) {
 		return ports.PaymentState{Status: d.SupportExpired, FailReason: "O pedido expirou"}, nil
 	}
 	return ports.PaymentState{Status: d.SupportPending}, nil
@@ -356,7 +360,7 @@ func (g *Gateway) InFlight(ref string) bool {
 	if ok && p.state == running {
 		return true
 	}
-	if ok && p.state == finished {
+	if ok && (p.state == finished || p.timedOut) {
 		return false
 	}
 	return !g.pastAnswering(ref)

@@ -16,11 +16,15 @@ export default function SupportPage() {
   const [page, setPage] = useState<Page | null>(null);
   const [missing, setMissing] = useState(false);
 
+  const [offline, setOffline] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+
+  // Only the server can say a page doesn't exist: a dropped request says nothing.
   useEffect(() => {
     api.get<Page>('/pages/' + encodeURIComponent(handle.toLowerCase()))
-      .then(p => { setPage(p); document.title = `${p.name} · refres.co`; })
-      .catch(() => setMissing(true));
-  }, [handle]);
+      .then(p => { setOffline(false); setPage(p); document.title = `Apoia ${p.name} com um refresco | refres.co`; })
+      .catch(e => { if (e instanceof ApiError && e.status === 404) setMissing(true); else setOffline(true); });
+  }, [handle, attempt]);
 
   return (
     <div style={{ minHeight: '100vh', background: '#F6EFE6', fontSize: 15 }}>
@@ -30,7 +34,7 @@ export default function SupportPage() {
       </header>
       <main style={{ maxWidth: 600, margin: '0 auto', padding: 'clamp(12px,3vw,32px) 20px 40px', display: 'flex', flexDirection: 'column', gap: 24 }}>
         {page?.sandbox && <div role="status" style={{ padding: '10px 14px', borderRadius: 14, background: '#FBEFD9', color: '#6B3F00', fontSize: 13.5, textAlign: 'center' }}><b>Modo de teste.</b> Nenhum pagamento é real e nada é cobrado.</div>}
-        {missing ? <NotFound /> : !page ? <Loading /> : <>
+        {missing ? <NotFound /> : offline && !page ? <Offline retry={() => { setOffline(false); setAttempt(a => a + 1); }} /> : !page ? <Loading /> : <>
           <Profile page={page} />
           <SupportCard page={page} />
         </>}
@@ -44,6 +48,14 @@ function Loading() {
   return <div style={{ display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center' }}>
     <div className="skeleton" style={{ width: 260, height: 42 }} /><div className="skeleton" style={{ width: 340, height: 48 }} /><div className="skeleton" style={{ width: '100%', height: 520, borderRadius: 28 }} />
   </div>;
+}
+
+function Offline({ retry }: { retry: () => void }) {
+  return <section style={{ textAlign: 'center', padding: '60px 0', display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
+    <h1 className="display" style={{ margin: 0, fontWeight: 800, fontSize: 32, letterSpacing: '-0.04em' }}>Sem ligação</h1>
+    <p style={{ margin: 0, color: '#57524B' }}>Não foi possível abrir esta página. Verifica a internet e tenta de novo.</p>
+    <button type="button" className="btn btn-primary" onClick={retry}>Tentar de novo</button>
+  </section>;
 }
 
 function NotFound() {
@@ -94,6 +106,9 @@ function SupportCard({ page }: { page: Page }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const [sup, setSup] = useState<SupportStatus | null>(null);
+  // The USSD prompt cuts the phone's data, so losing the connection here is normal.
+  const [reconnecting, setReconnecting] = useState(false);
+  const resumeKey = 'refres_support_' + page.handle;
   const [otp, setOtp] = useState('');
   const [now, setNow] = useState(Date.now());
   const idem = useRef(uid());
@@ -131,19 +146,43 @@ function SupportCard({ page }: { page: Page }) {
     return () => clearInterval(t);
   }, [phase]);
 
+  // iOS can reload this tab while the customer is on the USSD screen.
+  useEffect(() => {
+    let id: string | null = null;
+    try { id = sessionStorage.getItem(resumeKey); } catch { /* private mode */ }
+    if (!id) return;
+    api.get<SupportStatus>('/supports/' + id).then(s => {
+      if (s.status === 'confirmed') { setSup(s); remember(null); go('done'); }
+      else if (s.status === 'pending') { setSup(s); go('wait'); }
+      else remember(null);
+    }).catch(() => {});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     if (!sup || phase !== 'wait') return;
-    let alive = true;
-    const t = setInterval(async () => {
+    let alive = true, checking = false;
+    const check = async () => {
+      if (checking || document.hidden) return;
+      checking = true;
       try {
         const s = await api.get<SupportStatus>('/supports/' + sup.id);
         if (!alive) return;
+        setReconnecting(false);
         setSup(s);
-        if (s.status === 'confirmed') go('done');
-      } catch { /* keep polling */ }
-    }, 2000);
-    return () => { alive = false; clearInterval(t); };
-  }, [sup?.id, phase]);
+        if (s.status === 'confirmed') { remember(null); go('done'); }
+      } catch { if (alive) setReconnecting(true); }
+      finally { checking = false; }
+    };
+    const t = setInterval(check, 2000);
+    // Back from the PIN, or the connection returned: answer at once.
+    document.addEventListener('visibilitychange', check);
+    window.addEventListener('online', check);
+    return () => { alive = false; clearInterval(t); document.removeEventListener('visibilitychange', check); window.removeEventListener('online', check); };
+  }, [sup?.id, phase]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function remember(id: string | null) {
+    try { if (id) sessionStorage.setItem(resumeKey, id); else sessionStorage.removeItem(resumeKey); } catch { /* private mode */ }
+  }
 
   function go(p: Phase) {
     setPhase(p); setNetOpen(false); setTried(false); setErr('');
@@ -159,11 +198,24 @@ function SupportCard({ page }: { page: Page }) {
       const body: Record<string, unknown> = { amount: total * 100, channel: method, name: name.trim(), net: isHandle ? net : '', message: msg.trim() };
       if (isWallet) body.phone = phone;
       else Object.assign(body, { card_brand: brand, card_last4: card.slice(-4), card_token: 'mock_tok_' + uid().replace(/-/g, '') });
-      const s = await api.post<SupportStatus>(`/pages/${page.handle}/supports`, body, { 'Idempotency-Key': idem.current });
+      // The prompt can cut the data before the answer arrives. Asking again with the
+      // same key returns the same payment, and never sends a second prompt.
+      let s: SupportStatus | null = null;
+      for (let tries = 0; !s; tries++) {
+        try {
+          s = await api.post<SupportStatus>(`/pages/${page.handle}/supports`, body, { 'Idempotency-Key': idem.current });
+        } catch (e) {
+          if (e instanceof ApiError || tries >= 45) throw e;
+          setReconnecting(true);
+          await new Promise(r => setTimeout(r, 2000));
+        }
+      }
+      setReconnecting(false);
       idem.current = uid();
+      if (isWallet) remember(s.id);
       setSup(s); setOtp('');
       go(isWallet ? 'wait' : 'otp');
-    } catch (e) { setErr(e instanceof ApiError ? e.message : 'Sem ligação. Tenta de novo.'); }
+    } catch (e) { setReconnecting(false); setErr(e instanceof ApiError ? e.message : 'Sem ligação. Tenta de novo.'); }
     finally { setBusy(false); }
   }
 
@@ -180,7 +232,7 @@ function SupportCard({ page }: { page: Page }) {
 
   async function cancel() {
     if (sup && sup.status === 'pending') api.post(`/supports/${sup.id}/cancel`).catch(() => {});
-    setSup(null); go('form');
+    remember(null); setReconnecting(false); setSup(null); go('form');
   }
 
   async function resend() {
@@ -317,7 +369,7 @@ function SupportCard({ page }: { page: Page }) {
           </div>
           {err && <div className="err-box"><CircleAlert size={15} />{err}</div>}
           <button type="button" onClick={pay} disabled={busy} className="btn btn-primary" style={{ height: 58, borderRadius: 16, fontSize: 16.5, gap: 10 }}>
-            {busy ? <span className="spinner" /> : <Lock size={16} />}{amountOk && total > 0 ? `Pagar ${fmt(total)} MT` : 'Pagar'}
+            {busy ? <span className="spinner" /> : <Lock size={16} />}{reconnecting ? 'A aguardar ligação…' : amountOk && total > 0 ? `Pagar ${fmt(total)} MT` : 'Pagar'}
           </button>
           <div style={{ marginTop: -8, textAlign: 'center', fontSize: 12.5, lineHeight: 1.45, color: '#6E6861' }}>
             {isWallet ? 'Confirmas com o PIN no teu telemóvel. Nunca te pedimos o PIN aqui.' : 'Visa e Mastercard. O teu banco pode pedir um código de confirmação.'}
@@ -350,8 +402,9 @@ function SupportCard({ page }: { page: Page }) {
                 <>Enviámos um pedido de <b style={{ color: '#1A1410' }}>{mtN(sup.amount)} MT</b> para <span className="mono" style={{ color: '#1A1410', whiteSpace: 'nowrap' }}>+258 {fmtPhone(phone)}</span>. Insere o teu PIN {CHN[sup.channel as 'mpesa']}.</>}
             </p>
           </div>
+          {reconnecting && <div role="status" style={{ width: '100%', padding: '11px 14px', borderRadius: 12, background: '#FBEFD9', color: '#5B4600', fontSize: 13.5, lineHeight: 1.45 }}>O M-Pesa pode cortar a internet enquanto o pedido está aberto. Não precisas de fazer nada: o pagamento continua e atualizamos assim que a ligação voltar.</div>}
           {!failed && <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ height: 4, borderRadius: 2, background: '#F2EAE0', overflow: 'hidden' }}><div style={{ height: '100%', width: `${(secs / 60) * 100}%`, background: '#D14400', transition: 'width 1s linear' }} /></div>
+            <div style={{ height: 4, borderRadius: 2, background: '#F2EAE0', overflow: 'hidden' }}><div style={{ height: '100%', width: `${Math.min(100, (secs / 120) * 100)}%`, background: '#D14400', transition: 'width 1s linear' }} /></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#6E6861' }}>
               <span>{secs > 0 ? 'O pedido expira em' : 'O pedido expirou. Toca em Reenviar.'}</span>
               <span className="mono" style={{ color: '#1A1410' }}>{Math.floor(secs / 60)}:{String(secs % 60).padStart(2, '0')}</span>

@@ -189,7 +189,6 @@ func TestPendingWhileTheCustomerDecides(t *testing.T) {
 func TestUnclearAnswersAreNeverFailures(t *testing.T) {
 	for name, c2b := range map[string]func(w http.ResponseWriter, _ c2bBody){
 		"internal error code": func(w http.ResponseWriter, _ c2bBody) { answer(w, 500, "INS-1") },
-		"timeout code":        func(w http.ResponseWriter, _ c2bBody) { answer(w, 408, "INS-9") },
 		"not json":            func(w http.ResponseWriter, _ c2bBody) { w.WriteHeader(502); w.Write([]byte("<html>bad gateway")) },
 		"success code, wrong http": func(w http.ResponseWriter, _ c2bBody) {
 			answer(w, 200, "INS-0")
@@ -280,5 +279,32 @@ func TestRefusesOtherChannelsAndBadInput(t *testing.T) {
 	}
 	if _, err := New(Config{PublicKey: "not-a-key"}); err == nil {
 		t.Fatal("bad key accepted")
+	}
+}
+
+func TestTimeoutFreesTheCustomerToTryAgain(t *testing.T) {
+	f := &fake{c2b: func(w http.ResponseWriter, _ c2bBody) { answer(w, 408, "INS-9") }, query: func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(400)
+		json.NewEncoder(w).Encode(map[string]string{"output_ResponseCode": "INS-997", "output_ResponseTransactionStatus": "N/A"})
+	}}
+	g, _ := setup(t, f)
+	ref := start(t, g)
+	if st := settled(t, g, ref); st.Status != d.SupportExpired {
+		t.Fatalf("%+v", st)
+	}
+	if g.InFlight(ref) {
+		t.Fatal("the customer should be able to try again")
+	}
+
+	// A late confirmation still counts: the app settles an expired support.
+	f.mu.Lock()
+	f.query = func(w http.ResponseWriter, _ *http.Request) {
+		json.NewEncoder(w).Encode(map[string]string{"output_ResponseTransactionStatus": "Completed"})
+	}
+	f.mu.Unlock()
+	real := g.now
+	g.now = func() time.Time { return real().Add(queryEvery + time.Second) }
+	if st, _ := g.Status(context.Background(), ref); st.Status != d.SupportConfirmed {
+		t.Fatalf("%+v", st)
 	}
 }
