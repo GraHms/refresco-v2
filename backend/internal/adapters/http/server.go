@@ -28,9 +28,10 @@ type Options struct {
 }
 
 type Server struct {
-	app  *app.App
-	log  *slog.Logger
-	opts Options
+	cards cardCache
+	app   *app.App
+	log   *slog.Logger
+	opts  Options
 }
 
 func asMaxBytes(err error, t **http.MaxBytesError) bool { return errors.As(err, t) }
@@ -55,6 +56,11 @@ func New(a *app.App, l *slog.Logger, o Options) (*gin.Engine, error) {
 	r.Use(requestID(), recovery(l), accessLog(l), securityHeaders(), bodyLimit(64<<10), cors(allowed))
 
 	r.GET("/healthz", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"ok": true}) })
+	r.GET("/_meta/*path", s.metaHead)
+	r.GET("/_body/*path", s.metaBody)
+	r.GET("/robots.txt", s.robots)
+	r.GET("/sitemap.xml", s.sitemap)
+	r.GET("/og/*rest", newLimiter(600, 100).mw("og"), s.ogImage)
 	r.GET("/readyz", func(c *gin.Context) {
 		if o.Ping != nil && o.Ping() != nil {
 			c.JSON(http.StatusServiceUnavailable, gin.H{"ok": false})

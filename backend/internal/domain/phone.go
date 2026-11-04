@@ -67,7 +67,7 @@ var handleRe = regexp.MustCompile(`^[a-z0-9.]{3,24}$`)
 var reservedHandles = map[string]bool{
 	"admin": true, "api": true, "refres": true, "entrar": true, "registar": true, "recuperar": true,
 	"painel": true, "app": true, "static": true, "assets": true, "mpesa": true, "emola": true,
-	"suporte": true, "ajuda": true, "termos": true, "privacidade": true, "aprovar": true, "www": true,
+	"og": true, "suporte": true, "ajuda": true, "termos": true, "privacidade": true, "aprovar": true, "www": true,
 }
 
 func ValidHandle(h string) bool {

@@ -9,7 +9,7 @@ import { homeFor } from './Auth';
 
 export function Landing() {
   const { me } = useSession();
-  useEffect(() => { document.title = 'refres.co · Os teus fãs pagam-te um refresco'; }, []);
+  useEffect(() => { document.title = 'Recebe apoios dos teus fãs por M-Pesa | refres.co'; }, []);
   const feats = [
     [Smartphone, 'M-Pesa, com e-Mola e cartão em breve', 'O fã escolhe o valor e confirma com o PIN no telemóvel. Sem apps, sem registo.'],
     [Split, 'Divisão automática', 'Grupos e bandas dividem cada apoio na hora, pela percentagem que todos aprovaram.'],

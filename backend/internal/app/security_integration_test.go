@@ -4,12 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"log/slog"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
+	httpad "github.com/refresco/refresco-v2/backend/internal/adapters/http"
 	"github.com/refresco/refresco-v2/backend/internal/adapters/security"
 	"github.com/refresco/refresco-v2/backend/internal/app"
 	d "github.com/refresco/refresco-v2/backend/internal/domain"
@@ -358,4 +362,62 @@ func TestRealMoneyPaymentRules(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
+}
+
+func TestLinkPreviewsAndSearchRules(t *testing.T) {
+	a, _ := setup(t)
+	ctx := context.Background()
+	if _, err := a.Register(ctx, app.RegisterInput{Code: "TEST-1", Name: `Banda </title><script>alert(1)</script>`, Handle: "minhabanda", Email: "s@x.co", Phone: "845550000", Password: "password-123", Terms: true}); err != nil {
+		t.Fatal(err)
+	}
+	a.PublicURL = "https://pagarefresco.com"
+	engine, err := httpad.New(a, slog.New(slog.NewTextHandler(io.Discard, nil)), httpad.Options{PublicURL: "https://pagarefresco.com", Ping: func() error { return nil }})
+	if err != nil {
+		t.Fatal(err)
+	}
+	get := func(path string) (*httptest.ResponseRecorder, string) {
+		w := httptest.NewRecorder()
+		engine.ServeHTTP(w, httptest.NewRequest(http.MethodGet, path, nil))
+		return w, w.Body.String()
+	}
+	_, page := get("/_meta/minhabanda")
+	if strings.Contains(page, "<script>alert") {
+		t.Fatalf("a creator's name reached the HTML unescaped: %s", page)
+	}
+	for _, want := range []string{`og:image" content="https://pagarefresco.com/og/p/minhabanda.png?v=`, `summary_large_image`, `Apoia Banda`, `noindex`} {
+		if !strings.Contains(page, want) {
+			t.Fatalf("missing %q in %s", want, page)
+		}
+	}
+	acc, err := a.PublicPage(ctx, "minhabanda")
+	if err != nil {
+		t.Fatal(err)
+	}
+	acc.Status = d.AccountActive
+	if err := a.Store.Accounts().Update(ctx, acc); err != nil {
+		t.Fatal(err)
+	}
+	if _, page := get("/_meta/minhabanda"); !strings.Contains(page, "index,follow") || !strings.Contains(page, `rel="canonical" href="https://pagarefresco.com/minhabanda"`) {
+		t.Fatalf("an active creator should be findable: %s", page)
+	}
+	if _, xml := get("/sitemap.xml"); !strings.Contains(xml, "<loc>https://pagarefresco.com/minhabanda</loc>") {
+		t.Fatal(xml)
+	}
+	if _, page := get("/_meta/naoexiste"); !strings.Contains(page, "noindex") || strings.Contains(page, "canonical") {
+		t.Fatalf("unknown page: %s", page)
+	}
+	for _, path := range []string{"/_meta/painel/visao-geral", "/_meta/admin/painel", "/_meta/entrar", "/_meta/registar?convite=ABC"} {
+		if _, page := get(path); !strings.Contains(page, "noindex") {
+			t.Fatalf("%s should stay out of search: %s", path, page)
+		}
+	}
+	if _, page := get("/_meta/registar?convite=ABC"); !strings.Contains(page, "Foste convidado") || strings.Contains(page, "ABC") {
+		t.Fatalf("invite preview: %s", page)
+	}
+	if w, _ := get("/og/p/minhabanda.png"); w.Code != 200 || w.Header().Get("Content-Type") != "image/png" {
+		t.Fatalf("image: %d", w.Code)
+	}
+	if w, _ := get("/og/p/naoexiste.png"); w.Code != 404 {
+		t.Fatalf("unknown image: %d", w.Code)
+	}
 }

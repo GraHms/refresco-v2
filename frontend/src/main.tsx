@@ -1,4 +1,4 @@
-import { StrictMode, useEffect } from 'react';
+import { lazy, StrictMode, Suspense, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import '@fontsource-variable/archivo/wdth.css';
@@ -11,13 +11,18 @@ import ErrorBoundary from './components/ErrorBoundary';
 import SupportPage from './pages/SupportPage';
 import Auth, { homeFor } from './pages/Auth';
 import { Landing, SplitApproval } from './pages/Misc';
-import BackofficeLayout from './pages/backoffice/Layout';
-import Overview from './pages/backoffice/Overview';
-import Inbox from './pages/backoffice/Inbox';
-import PageSettings from './pages/backoffice/PageSettings';
-import Group from './pages/backoffice/Group';
-import Payouts from './pages/backoffice/Payouts';
-import { AdminAccounts, AdminHome, AdminInvites, AdminLayout, AdminWithdrawals } from './pages/admin/Admin';
+
+const BackofficeLayout = lazy(() => import('./pages/backoffice/Layout'));
+const Overview = lazy(() => import('./pages/backoffice/Overview'));
+const Inbox = lazy(() => import('./pages/backoffice/Inbox'));
+const PageSettings = lazy(() => import('./pages/backoffice/PageSettings'));
+const Group = lazy(() => import('./pages/backoffice/Group'));
+const Payouts = lazy(() => import('./pages/backoffice/Payouts'));
+const AdminAccounts = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminAccounts })));
+const AdminHome = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminHome })));
+const AdminInvites = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminInvites })));
+const AdminLayout = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminLayout })));
+const AdminWithdrawals = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminWithdrawals })));
 
 function Guard({ role, children }: { role: 'creator' | 'superadmin'; children: JSX.Element }) {
   const { me, refresh } = useSession();
@@ -43,6 +48,7 @@ createRoot(document.getElementById('root')!).render(
       <SessionProvider>
         <ToastProvider>
           <Boot>
+            <Suspense fallback={<div style={{ padding: 40 }}><div className="skeleton" style={{ height: 300, maxWidth: 1100, margin: '0 auto' }} /></div>}>
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/entrar" element={<Auth />} />
@@ -71,6 +77,7 @@ createRoot(document.getElementById('root')!).render(
               <Route path="/:handle" element={<SupportPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
+            </Suspense>
           </Boot>
         </ToastProvider>
       </SessionProvider>

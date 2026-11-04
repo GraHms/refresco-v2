@@ -63,6 +63,10 @@ Put a TLS terminating load balancer in front of `web`. `APP_ENV` defaults to `pr
 - Row-level locking for invites, balances, supports and withdrawals; DB check constraints keep balances non-negative and invite uses within limits.
 - CSV export neutralises formula injection. nginx sets CSP, HSTS, frame, referrer and permissions headers. Containers run as non-root with a read-only filesystem and no capabilities; Postgres is on an internal network.
 
+## Link previews and search
+
+Apps that preview a link, and most crawlers, read the HTML without running the site. nginx's SSI includes in `index.html` ask the API for each page's title, description and image (`adapters/http/seo.go`), and if the API can't answer, the page opens with the default title. Creator pages get their own preview image from `/og/`. Only active creators are indexed and listed in `/sitemap.xml`.
+
 ## Email
 
 With `SMTP_ADDR` set, password reset codes, payout notices and split approvals go by email, from `MAIL_FROM`, on a background worker, so requests never wait on the mail server. Without it, notifications only go to the log. A member with no account yet, such as someone just invited to a group, has only a phone number, so their notices stay in the log until SMS is connected.
