@@ -7,14 +7,14 @@ import (
 )
 
 type userModel struct {
-	ID           string `gorm:"type:uuid;primaryKey"`
-	Email        string `gorm:"size:254;uniqueIndex;not null"`
+	ID           string  `gorm:"type:uuid;primaryKey"`
+	Email        string  `gorm:"size:254;uniqueIndex;not null"`
 	Phone        *string `gorm:"size:9;uniqueIndex"`
-	Name         string `gorm:"size:80;not null"`
-	PasswordHash string `gorm:"size:100;not null"`
-	Role         string `gorm:"size:20;not null;index"`
-	TokenVersion int    `gorm:"not null;default:0"`
-	FailedLogins int    `gorm:"not null;default:0"`
+	Name         string  `gorm:"size:80;not null"`
+	PasswordHash string  `gorm:"size:100;not null"`
+	Role         string  `gorm:"size:20;not null;index"`
+	TokenVersion int     `gorm:"not null;default:0"`
+	FailedLogins int     `gorm:"not null;default:0"`
 	LockedUntil  *time.Time
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
@@ -23,23 +23,23 @@ type userModel struct {
 func (userModel) TableName() string { return "users" }
 
 type accountModel struct {
-	ID          string `gorm:"type:uuid;primaryKey"`
-	OwnerID     string `gorm:"type:uuid;not null;index"`
-	Handle      string `gorm:"size:24;uniqueIndex;not null"`
-	Name        string `gorm:"size:40;not null"`
-	Category    string `gorm:"size:40;not null"`
-	Bio         string `gorm:"size:800;not null;default:''"`
-	Thanks      string `gorm:"size:800;not null;default:''"`
+	ID          string                     `gorm:"type:uuid;primaryKey"`
+	OwnerID     string                     `gorm:"type:uuid;not null;index"`
+	Handle      string                     `gorm:"size:24;uniqueIndex;not null"`
+	Name        string                     `gorm:"size:40;not null"`
+	Category    string                     `gorm:"size:40;not null"`
+	Bio         string                     `gorm:"size:800;not null;default:''"`
+	Thanks      string                     `gorm:"size:800;not null;default:''"`
 	Amounts     datatypes.JSONSlice[int64] `gorm:"type:jsonb;not null"`
-	DefaultIdx  int    `gorm:"not null"`
-	AllowCustom bool   `gorm:"not null"`
-	MinAmount   int64  `gorm:"not null"`
-	Socials     datatypes.JSONMap `gorm:"type:jsonb;not null"`
-	ChMpesa     bool   `gorm:"not null"`
-	ChEmola     bool   `gorm:"not null"`
-	ChCard      bool   `gorm:"not null"`
-	FeeBPS      int    `gorm:"not null;check:fee_bps_range,fee_bps >= 0 AND fee_bps <= 5000"`
-	FeeNote     string `gorm:"size:240;not null;default:''"`
+	DefaultIdx  int                        `gorm:"not null"`
+	AllowCustom bool                       `gorm:"not null"`
+	MinAmount   int64                      `gorm:"not null"`
+	Socials     datatypes.JSONMap          `gorm:"type:jsonb;not null"`
+	ChMpesa     bool                       `gorm:"not null"`
+	ChEmola     bool                       `gorm:"not null"`
+	ChCard      bool                       `gorm:"not null"`
+	FeeBPS      int                        `gorm:"not null;check:fee_bps_range,fee_bps >= 0 AND fee_bps <= 5000"`
+	FeeNote     string                     `gorm:"size:240;not null;default:''"`
 	FeeUntil    *time.Time
 	Status      string `gorm:"size:20;not null;index"`
 	StatusNote  string `gorm:"size:800;not null;default:''"`
@@ -83,25 +83,26 @@ type payoutAccountModel struct {
 func (payoutAccountModel) TableName() string { return "payout_accounts" }
 
 type supportModel struct {
-	ID            string `gorm:"type:uuid;primaryKey"`
-	Ref           string `gorm:"size:16;uniqueIndex;not null"`
-	AccountID     string `gorm:"type:uuid;not null;index:idx_supports_account_created,priority:1"`
-	Amount        int64  `gorm:"not null;check:amount_positive,amount > 0"`
-	FeeBPS        int    `gorm:"not null;default:0"`
-	Fee           int64  `gorm:"not null;default:0"`
-	Net           int64  `gorm:"not null;default:0"`
-	Preset        bool   `gorm:"not null"`
-	Channel       string `gorm:"size:10;not null"`
-	PayerPhone    string `gorm:"size:9;not null;default:''"`
-	CardBrand     string `gorm:"size:12;not null;default:''"`
-	CardLast4     string `gorm:"size:4;not null;default:''"`
-	SupporterName string `gorm:"size:160;not null;default:''"`
-	SupporterNet  string `gorm:"size:12;not null;default:''"`
-	Message       string `gorm:"size:1200;not null;default:''"`
-	Status        string `gorm:"size:12;not null;index"`
-	FailReason    string `gorm:"size:120;not null;default:''"`
+	ID            string  `gorm:"type:uuid;primaryKey"`
+	Ref           string  `gorm:"size:16;uniqueIndex;not null"`
+	AccountID     string  `gorm:"type:uuid;not null;index:idx_supports_account_created,priority:1"`
+	Amount        int64   `gorm:"not null;check:amount_positive,amount > 0"`
+	FeeBPS        int     `gorm:"not null;default:0"`
+	Fee           int64   `gorm:"not null;default:0"`
+	Net           int64   `gorm:"not null;default:0"`
+	Preset        bool    `gorm:"not null"`
+	Channel       string  `gorm:"size:10;not null"`
+	PayerPhone    string  `gorm:"size:9;not null;default:''"`
+	CardBrand     string  `gorm:"size:12;not null;default:''"`
+	CardLast4     string  `gorm:"size:4;not null;default:''"`
+	SupporterName string  `gorm:"size:160;not null;default:''"`
+	SupporterNet  string  `gorm:"size:12;not null;default:''"`
+	Message       string  `gorm:"size:1200;not null;default:''"`
+	Status        string  `gorm:"size:12;not null;index"`
+	FailReason    string  `gorm:"size:120;not null;default:''"`
 	ProviderRef   *string `gorm:"size:80;uniqueIndex"`
-	NextAction    string `gorm:"size:20;not null;default:''"`
+	NextAction    string  `gorm:"size:20;not null;default:''"`
+	Pushes        int     `gorm:"not null;default:0"`
 	ExpiresAt     time.Time
 	IdemKey       *string `gorm:"size:64;uniqueIndex:idx_supports_idem,composite:idem"`
 	IdemAccount   *string `gorm:"type:uuid;uniqueIndex:idx_supports_idem,composite:idem"`
@@ -140,7 +141,7 @@ type withdrawalModel struct {
 	DueAt       time.Time
 	DecidedAt   *time.Time
 	PaidAt      *time.Time
-	DecidedBy   string `gorm:"size:36;not null;default:''"`
+	DecidedBy   string    `gorm:"size:36;not null;default:''"`
 	CreatedAt   time.Time `gorm:"index"`
 	UpdatedAt   time.Time
 }
@@ -161,11 +162,11 @@ type inviteModel struct {
 func (inviteModel) TableName() string { return "invites" }
 
 type proposalModel struct {
-	ID        string `gorm:"type:uuid;primaryKey"`
-	AccountID string `gorm:"type:uuid;not null;index"`
+	ID        string         `gorm:"type:uuid;primaryKey"`
+	AccountID string         `gorm:"type:uuid;not null;index"`
 	Splits    datatypes.JSON `gorm:"type:jsonb;not null"`
-	Status    string `gorm:"size:12;not null;index"`
-	CreatedBy string `gorm:"type:uuid;not null"`
+	Status    string         `gorm:"size:12;not null;index"`
+	CreatedBy string         `gorm:"type:uuid;not null"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -238,8 +239,8 @@ type dailyStatModel struct {
 func (dailyStatModel) TableName() string { return "daily_stats" }
 
 type sessionModel struct {
-	ID        string `gorm:"type:uuid;primaryKey"`
-	UserID    string `gorm:"type:uuid;not null;index"`
+	ID        string    `gorm:"type:uuid;primaryKey"`
+	UserID    string    `gorm:"type:uuid;not null;index"`
 	ExpiresAt time.Time `gorm:"not null;index"`
 	RevokedAt *time.Time
 	CreatedAt time.Time

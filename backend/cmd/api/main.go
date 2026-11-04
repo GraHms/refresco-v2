@@ -41,7 +41,7 @@ func run(log *slog.Logger) error {
 	}
 	sqlDB, _ := db.DB()
 	engine, err := httpad.New(a, log, httpad.Options{
-		AllowedOrigins: cfg.AllowedOrigins, TrustedProxies: cfg.TrustedProxies, CookieSecure: cfg.CookieSecure, Production: cfg.Production(),
+		PublicURL: cfg.PublicURL, AllowedOrigins: cfg.AllowedOrigins, TrustedProxies: cfg.TrustedProxies, CookieSecure: cfg.CookieSecure, Production: cfg.Production(),
 		Ping: func() error {
 			c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 			defer cancel()

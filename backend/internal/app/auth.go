@@ -174,11 +174,8 @@ func (a *App) CheckInvite(ctx context.Context, code string) (InviteCheck, error)
 	if err != nil {
 		return InviteCheck{}, err
 	}
-	if inv.Status == d.InviteRevoked {
-		return InviteCheck{Reason: "revoked"}, nil
-	}
 	if !inv.Usable() {
-		return InviteCheck{Reason: "used"}, nil
+		return InviteCheck{Reason: "not_found"}, nil
 	}
 	return InviteCheck{Valid: true, Inviter: "Equipa refres.co"}, nil
 }
@@ -250,13 +247,13 @@ func (a *App) Register(ctx context.Context, in RegisterInput) (*Session, error) 
 	err = a.Store.Tx(ctx, func(s ports.Store) error {
 		inv, err := s.Invites().ByCodeForUpdate(ctx, code)
 		if errors.Is(err, d.ErrNotFound) {
-			return d.Invalid("invite_invalid", "Este código não existe.")
+			return errInviteInvalid
 		}
 		if err != nil {
 			return err
 		}
 		if !inv.Usable() {
-			return d.Invalid("invite_used", "Este código já foi usado.")
+			return errInviteInvalid
 		}
 		if _, err := s.Users().ByEmail(ctx, email); err == nil {
 			return d.Conflict("email_taken", "Já existe uma conta com este email.")
@@ -303,6 +300,8 @@ func (a *App) Register(ctx context.Context, in RegisterInput) (*Session, error) 
 	}
 	return a.issue(ctx, u)
 }
+
+var errInviteInvalid = d.Invalid("invite_invalid", "Este código não é válido ou já foi usado.")
 
 func firstName(n string) string {
 	f := strings.Fields(n)

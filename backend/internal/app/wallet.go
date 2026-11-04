@@ -151,8 +151,8 @@ func (a *App) Wallet(ctx context.Context, c *Creator) (*WalletView, error) {
 }
 
 type PayoutAccountInput struct {
-	Kind   d.PayoutKind `json:"kind"`
-	Number string       `json:"number"`
+	Kind     d.PayoutKind `json:"kind"`
+	Number   string       `json:"number"`
 	Bank     string       `json:"bank"`
 	Holder   string       `json:"holder"`
 	IsMain   bool         `json:"is_main"`

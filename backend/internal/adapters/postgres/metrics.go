@@ -13,7 +13,9 @@ import (
 
 type statsRepo struct{ db *gorm.DB }
 
-func dayOf(t time.Time) time.Time { return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC) }
+func dayOf(t time.Time) time.Time {
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
+}
 
 func (r statsRepo) RecordSupport(ctx context.Context, acc string, at time.Time, ch d.Channel, amount, fee d.Money) error {
 	row := dailyStatModel{AccountID: acc, Day: dayOf(at), Channel: string(ch), Gross: int64(amount), Fee: int64(fee), Count: 1}

@@ -22,14 +22,14 @@ type Renderer struct{ Loc *time.Location }
 type rgb struct{ r, g, b int }
 
 var (
-	ink    = rgb{26, 20, 16}
-	brand  = rgb{209, 68, 0}
-	muted  = rgb{110, 104, 97}
-	line   = rgb{228, 221, 209}
-	paper  = rgb{251, 247, 241}
-	okC    = rgb{23, 128, 61}
-	warnC  = rgb{154, 91, 0}
-	errC   = rgb{180, 35, 24}
+	ink   = rgb{26, 20, 16}
+	brand = rgb{209, 68, 0}
+	muted = rgb{110, 104, 97}
+	line  = rgb{228, 221, 209}
+	paper = rgb{251, 247, 241}
+	okC   = rgb{23, 128, 61}
+	warnC = rgb{154, 91, 0}
+	errC  = rgb{180, 35, 24}
 )
 
 var statusName = map[d.WithdrawalStatus]string{d.WithdrawalRequested: "Pedido", d.WithdrawalApproved: "Aprovado", d.WithdrawalPaid: "Pago", d.WithdrawalRejected: "Rejeitado"}

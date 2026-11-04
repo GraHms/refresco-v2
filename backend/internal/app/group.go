@@ -275,7 +275,7 @@ func (a *App) ProposeSplit(ctx context.Context, c *Creator, splits []d.MemberPct
 		return nil, err
 	}
 	for _, n := range notes {
-		a.notify(ctx, ports.Message{To: d.FormatMZPhone(n.phone), Kind: "split_approval", Body: c.Account.Name + " propôs uma nova divisão. Aprova em " + a.PublicURL + "/aprovar/" + n.token})
+		a.notify(ctx, ports.Message{To: d.FormatMZPhone(n.phone), Kind: "split_approval", Body: c.Account.Name + " propôs uma nova divisão. Aprova em " + a.PublicURL + "/aprovar#" + n.token})
 	}
 	return a.Group(ctx, c)
 }
@@ -295,11 +295,11 @@ func (a *App) applySplit(ctx context.Context, s ports.Store, accountID string, m
 }
 
 type ApprovalView struct {
-	Account  string        `json:"account"`
-	Member   string        `json:"member"`
-	Splits   []MemberView  `json:"splits"`
-	Approved bool          `json:"approved"`
-	Applied  bool          `json:"applied"`
+	Account  string       `json:"account"`
+	Member   string       `json:"member"`
+	Splits   []MemberView `json:"splits"`
+	Approved bool         `json:"approved"`
+	Applied  bool         `json:"applied"`
 }
 
 func (a *App) approvalByToken(ctx context.Context, s ports.Store, token string) (*d.SplitApproval, *d.SplitProposal, error) {

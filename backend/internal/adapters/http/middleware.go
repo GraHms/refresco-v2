@@ -83,7 +83,11 @@ func csrfGuard(allowed map[string]bool) gin.HandlerFunc {
 			c.Next()
 			return
 		}
-		if o := c.GetHeader("Origin"); o != "" && len(allowed) > 0 && !allowed[o] {
+		if o := c.GetHeader("Origin"); o != "" && !allowed[o] {
+			abort(c, http.StatusForbidden, "bad_origin", "Origem não permitida.")
+			return
+		}
+		if c.GetHeader("Sec-Fetch-Site") == "cross-site" {
 			abort(c, http.StatusForbidden, "bad_origin", "Origem não permitida.")
 			return
 		}

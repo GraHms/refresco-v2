@@ -19,19 +19,20 @@ import (
 )
 
 type Deps struct {
-	Store        ports.Store
-	Metrics      ports.MetricsReader
-	Payments     ports.PaymentGateway
-	Notifier     ports.Notifier
-	Docs         ports.DocumentRenderer
-	Hasher       ports.PasswordHasher
-	Tokens       ports.TokenIssuer
-	Clock        ports.Clock
-	Log          *slog.Logger
-	Secret       []byte
-	PublicURL    string
-	Location     *time.Location
+	Store         ports.Store
+	Metrics       ports.MetricsReader
+	Payments      ports.PaymentGateway
+	Notifier      ports.Notifier
+	Docs          ports.DocumentRenderer
+	Hasher        ports.PasswordHasher
+	Tokens        ports.TokenIssuer
+	Clock         ports.Clock
+	Log           *slog.Logger
+	Secret        []byte
+	PublicURL     string
+	Location      *time.Location
 	AllowSimulate bool
+	Sandbox       bool
 }
 
 type App struct {

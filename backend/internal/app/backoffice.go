@@ -35,7 +35,7 @@ type RangeKey string
 
 type rangeSpec struct {
 	from, to, prevFrom time.Time
-	bucket           ports.Bucket
+	bucket             ports.Bucket
 }
 
 func (a *App) rangeOf(key string) (rangeSpec, error) {
@@ -57,23 +57,23 @@ func (a *App) rangeOf(key string) (rangeSpec, error) {
 }
 
 type Overview struct {
-	Range         string              `json:"range"`
-	Gross         d.Money             `json:"gross"`
-	Net           d.Money             `json:"net"`
-	Fee           d.Money             `json:"fee"`
-	GrossPrev     d.Money             `json:"gross_prev"`
-	Count         int64               `json:"count"`
-	CountPrev     int64               `json:"count_prev"`
-	Supporters    int64               `json:"supporters"`
-	Average       d.Money             `json:"average"`
-	TopAmount     d.Money             `json:"top_amount"`
-	ByChannel     ports.ChannelTotals `json:"by_channel"`
-	Series        []ports.SeriesPoint `json:"series"`
-	Bucket        ports.Bucket        `json:"bucket"`
-	FeeBPS        d.BPS               `json:"fee_bps"`
-	Split         []SplitRow          `json:"split"`
-	Recent        []SupportView       `json:"recent"`
-	Unread        int64               `json:"unread"`
+	Range      string              `json:"range"`
+	Gross      d.Money             `json:"gross"`
+	Net        d.Money             `json:"net"`
+	Fee        d.Money             `json:"fee"`
+	GrossPrev  d.Money             `json:"gross_prev"`
+	Count      int64               `json:"count"`
+	CountPrev  int64               `json:"count_prev"`
+	Supporters int64               `json:"supporters"`
+	Average    d.Money             `json:"average"`
+	TopAmount  d.Money             `json:"top_amount"`
+	ByChannel  ports.ChannelTotals `json:"by_channel"`
+	Series     []ports.SeriesPoint `json:"series"`
+	Bucket     ports.Bucket        `json:"bucket"`
+	FeeBPS     d.BPS               `json:"fee_bps"`
+	Split      []SplitRow          `json:"split"`
+	Recent     []SupportView       `json:"recent"`
+	Unread     int64               `json:"unread"`
 }
 
 type SplitRow struct {
@@ -142,29 +142,33 @@ func (a *App) Overview(ctx context.Context, c *Creator, key string) (*Overview, 
 }
 
 type SupportView struct {
-	ID          string          `json:"id"`
-	Ref         string          `json:"ref"`
-	Name        string          `json:"name"`
-	Net         string          `json:"net,omitempty"`
-	Message     string          `json:"message"`
-	Amount      d.Money         `json:"amount"`
-	Preset      bool            `json:"preset"`
-	Fee         d.Money         `json:"fee"`
-	FeeBPS      d.BPS           `json:"fee_bps"`
-	NetAmount   d.Money         `json:"net_amount"`
-	Channel     d.Channel       `json:"channel"`
-	Contact     string          `json:"contact"`
-	Card        string          `json:"card,omitempty"`
-	Status      d.SupportStatus `json:"status"`
-	FailReason  string          `json:"fail_reason,omitempty"`
-	Read        bool            `json:"read"`
-	CreatedAt   time.Time       `json:"created_at"`
-	Splits      []SplitRow      `json:"splits,omitempty"`
+	ID         string          `json:"id"`
+	Ref        string          `json:"ref"`
+	Name       string          `json:"name"`
+	Net        string          `json:"net,omitempty"`
+	Message    string          `json:"message"`
+	Amount     d.Money         `json:"amount"`
+	Preset     bool            `json:"preset"`
+	Fee        d.Money         `json:"fee"`
+	FeeBPS     d.BPS           `json:"fee_bps"`
+	NetAmount  d.Money         `json:"net_amount"`
+	Channel    d.Channel       `json:"channel"`
+	Contact    string          `json:"contact"`
+	Card       string          `json:"card,omitempty"`
+	Status     d.SupportStatus `json:"status"`
+	FailReason string          `json:"fail_reason,omitempty"`
+	Read       bool            `json:"read"`
+	CreatedAt  time.Time       `json:"created_at"`
+	Splits     []SplitRow      `json:"splits,omitempty"`
+	Hidden     bool            `json:"hidden"`
 }
 
 func supportView(s *d.Support, splits []d.SupportSplit) SupportView {
 	v := SupportView{ID: s.ID, Ref: s.Ref, Name: s.SupporterName, Net: s.SupporterNet, Message: s.Message, Amount: s.Amount, Preset: s.Preset,
 		Fee: s.Fee, FeeBPS: s.FeeBPS, NetAmount: s.Net, Channel: s.Channel, Status: s.Status, FailReason: s.FailReason, Read: s.ReadAt != nil, CreatedAt: s.CreatedAt}
+	if s.Status != d.SupportConfirmed {
+		v.Name, v.Net, v.Message, v.Hidden = "", "", "", true
+	}
 	if s.Channel.IsWallet() {
 		v.Contact = d.FormatMZPhone(s.PayerPhone)
 	} else {
@@ -186,11 +190,11 @@ func cardLabel(brand, last4 string) string {
 }
 
 type SupportList struct {
-	Items    []SupportView         `json:"items"`
-	Total    int64                 `json:"total"`
-	All      int64                 `json:"all"`
-	Unread   int64                 `json:"unread"`
-	Channels map[d.Channel]int64   `json:"channels"`
+	Items    []SupportView       `json:"items"`
+	Total    int64               `json:"total"`
+	All      int64               `json:"all"`
+	Unread   int64               `json:"unread"`
+	Channels map[d.Channel]int64 `json:"channels"`
 }
 
 func (a *App) ListSupports(ctx context.Context, c *Creator, f ports.SupportFilter) (*SupportList, error) {

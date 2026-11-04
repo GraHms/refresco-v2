@@ -15,6 +15,14 @@ import (
 
 const MaxSupportAmount = 100_000 * d.MT
 
+const (
+	pushWindow          = 15 * time.Minute
+	maxPushesPerPhone   = 5
+	maxPushesPerSupport = 3
+)
+
+var errPushLimit = d.Invalid("push_limit", "Já enviámos vários pedidos para este número. Tenta de novo daqui a 15 minutos.")
+
 var supporterNets = map[string]bool{"x": true, "instagram": true, "tiktok": true, "facebook": true, "youtube": true}
 
 var (
@@ -35,16 +43,16 @@ func (a *App) PublicPage(ctx context.Context, handle string) (*d.Account, error)
 }
 
 type CreateSupportInput struct {
-	Amount       d.Money
-	Channel      d.Channel
-	Phone        string
-	CardToken    string
-	CardBrand    string
-	CardLast4    string
-	Name         string
-	Net          string
-	Message      string
-	IdemKey      string
+	Amount    d.Money
+	Channel   d.Channel
+	Phone     string
+	CardToken string
+	CardBrand string
+	CardLast4 string
+	Name      string
+	Net       string
+	Message   string
+	IdemKey   string
 }
 
 func (a *App) CreateSupport(ctx context.Context, handle string, in CreateSupportInput) (*d.Support, error) {
@@ -78,6 +86,14 @@ func (a *App) CreateSupport(ctx context.Context, handle string, in CreateSupport
 			return nil, d.Invalid("wallet_mismatch", "Este número não pertence a esta carteira.")
 		}
 		s.PayerPhone = p
+		n, err := a.Store.Supports().PushesSince(ctx, p, a.now().Add(-pushWindow))
+		if err != nil {
+			return nil, err
+		}
+		if n >= maxPushesPerPhone {
+			return nil, errPushLimit
+		}
+		s.Pushes = 1
 	default:
 		brand := strings.ToLower(in.CardBrand)
 		if brand != "visa" && brand != "mastercard" {
@@ -190,6 +206,14 @@ func (a *App) ResendSupport(ctx context.Context, id string) (*d.Support, error) 
 	if !s.Channel.IsWallet() || (s.Status != d.SupportPending && s.Status != d.SupportExpired) {
 		return nil, d.ErrStaleState
 	}
+	if s.Pushes >= maxPushesPerSupport {
+		return nil, errPushLimit
+	}
+	if n, err := a.Store.Supports().PushesSince(ctx, s.PayerPhone, a.now().Add(-pushWindow)); err != nil {
+		return nil, err
+	} else if n >= maxPushesPerPhone {
+		return nil, errPushLimit
+	}
 	acc, err := a.Store.Accounts().ByID(ctx, s.AccountID)
 	if err != nil {
 		return nil, err
@@ -208,6 +232,7 @@ func (a *App) ResendSupport(ctx context.Context, id string) (*d.Support, error) 
 			return d.ErrStaleState
 		}
 		cur.Status, cur.FailReason = d.SupportPending, ""
+		cur.Pushes++
 		cur.ProviderRef, cur.NextAction, cur.ExpiresAt = init.ProviderRef, init.NextAction, init.ExpiresAt
 		out = cur
 		return st.Supports().Update(ctx, cur)

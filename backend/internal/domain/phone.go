@@ -14,7 +14,7 @@ const (
 	ChannelCard  Channel = "card"
 )
 
-func (c Channel) Valid() bool { return c == ChannelMpesa || c == ChannelEmola || c == ChannelCard }
+func (c Channel) Valid() bool    { return c == ChannelMpesa || c == ChannelEmola || c == ChannelCard }
 func (c Channel) IsWallet() bool { return c == ChannelMpesa || c == ChannelEmola }
 
 var nonDigit = regexp.MustCompile(`\D`)

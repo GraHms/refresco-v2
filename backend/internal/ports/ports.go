@@ -102,6 +102,8 @@ type SupportRepo interface {
 	AddSplits(ctx context.Context, splits []d.SupportSplit) error
 	Splits(ctx context.Context, supportID string) ([]d.SupportSplit, error)
 	ExpireStale(ctx context.Context, before time.Time) (int64, error)
+	// PushesSince counts payment requests sent to a phone number, to stop prompt flooding.
+	PushesSince(ctx context.Context, phone string, since time.Time) (int64, error)
 }
 
 type WithdrawalFilter struct {

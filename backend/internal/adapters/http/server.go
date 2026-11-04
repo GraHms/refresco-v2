@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -18,6 +19,7 @@ import (
 )
 
 type Options struct {
+	PublicURL      string
 	AllowedOrigins []string
 	TrustedProxies []string
 	CookieSecure   bool
@@ -46,6 +48,9 @@ func New(a *app.App, l *slog.Logger, o Options) (*gin.Engine, error) {
 	allowed := map[string]bool{}
 	for _, x := range o.AllowedOrigins {
 		allowed[x] = true
+	}
+	if u, err := url.Parse(o.PublicURL); err == nil && u.Scheme != "" && u.Host != "" {
+		allowed[u.Scheme+"://"+u.Host] = true
 	}
 	r.Use(requestID(), recovery(l), accessLog(l), securityHeaders(), bodyLimit(64<<10), cors(allowed))
 
@@ -86,8 +91,8 @@ func New(a *app.App, l *slog.Logger, o Options) (*gin.Engine, error) {
 		v1.POST("/supports/:id/cancel", s.cancel)
 		v1.POST("/supports/:id/simulate", payLimit.mw("pay"), s.simulate)
 
-		v1.GET("/split-approvals/:token", authLimit.mw("approval"), s.splitApproval)
-		v1.POST("/split-approvals/:token", authLimit.mw("approval"), s.approveSplit)
+		v1.POST("/split-approvals/lookup", authLimit.mw("approval"), s.splitApproval)
+		v1.POST("/split-approvals/approve", authLimit.mw("approval"), s.approveSplit)
 
 		me := v1.Group("", s.auth)
 		me.GET("/me", s.me)
@@ -153,17 +158,18 @@ func (s *Server) clearCookie(c *gin.Context) {
 }
 
 type meView struct {
-	ID      string  `json:"id"`
-	Name    string  `json:"name"`
-	Email   string  `json:"email"`
-	Role    d.Role  `json:"role"`
-	Account *pageView `json:"account,omitempty"`
+	ID      string          `json:"id"`
+	Name    string          `json:"name"`
+	Email   string          `json:"email"`
+	Role    d.Role          `json:"role"`
+	Account *pageView       `json:"account,omitempty"`
 	Member  *app.MemberView `json:"member,omitempty"`
 	Status  d.AccountStatus `json:"account_status,omitempty"`
+	Sandbox bool            `json:"sandbox"`
 }
 
 func (s *Server) meOf(c *gin.Context, u *d.User) meView {
-	v := meView{ID: u.ID, Name: u.Name, Email: u.Email, Role: u.Role}
+	v := meView{ID: u.ID, Name: u.Name, Email: u.Email, Role: u.Role, Sandbox: s.app.Sandbox}
 	if u.Role == d.RoleCreator {
 		if cr, err := s.app.CreatorContext(c.Request.Context(), u); err == nil {
 			p := toPage(cr.Account)
@@ -318,6 +324,7 @@ func (s *Server) handleAvailable(c *gin.Context) {
 
 type pageView struct {
 	ID          string            `json:"id"`
+	Sandbox     bool              `json:"sandbox,omitempty"`
 	Name        string            `json:"name"`
 	Handle      string            `json:"handle"`
 	Category    string            `json:"category"`
@@ -343,7 +350,7 @@ func (s *Server) publicPage(c *gin.Context) {
 		return
 	}
 	p := toPage(a)
-	p.ID = ""
+	p.ID, p.Sandbox = "", s.app.Sandbox
 	c.Header("Cache-Control", "public, max-age=30")
 	c.JSON(http.StatusOK, p)
 }
@@ -371,7 +378,7 @@ func (s *Server) supportOut(sp *d.Support, acc *d.Account) supportStatusView {
 	v := supportStatusView{ID: sp.ID, Ref: sp.Ref, Status: sp.Status, NextAction: sp.NextAction, ExpiresAt: sp.ExpiresAt, Amount: sp.Amount, Channel: sp.Channel,
 		FailReason: sp.FailReason, Name: sp.SupporterName, ConfirmedAt: sp.ConfirmedAt, CreatedAt: sp.CreatedAt, Simulate: s.app.AllowSimulate}
 	if sp.Channel.IsWallet() {
-		v.Phone = sp.PayerPhone
+		v.Phone = maskPhone(sp.PayerPhone)
 	} else {
 		v.Card = sp.CardBrand + ":" + sp.CardLast4
 	}
@@ -522,7 +529,13 @@ func (s *Server) webhook(c *gin.Context) {
 }
 
 func (s *Server) splitApproval(c *gin.Context) {
-	v, err := s.app.SplitApproval(c.Request.Context(), c.Param("token"))
+	var in struct {
+		Token string `json:"token"`
+	}
+	if !s.bind(c, &in) {
+		return
+	}
+	v, err := s.app.SplitApproval(c.Request.Context(), in.Token)
 	if err != nil {
 		s.fail(c, err)
 		return
@@ -531,7 +544,13 @@ func (s *Server) splitApproval(c *gin.Context) {
 }
 
 func (s *Server) approveSplit(c *gin.Context) {
-	v, err := s.app.ApproveSplit(c.Request.Context(), c.Param("token"))
+	var in struct {
+		Token string `json:"token"`
+	}
+	if !s.bind(c, &in) {
+		return
+	}
+	v, err := s.app.ApproveSplit(c.Request.Context(), in.Token)
 	if err != nil {
 		s.fail(c, err)
 		return
@@ -612,6 +631,9 @@ func (s *Server) exportSupports(c *gin.Context) {
 	chName := map[d.Channel]string{d.ChannelMpesa: "M-Pesa", d.ChannelEmola: "e-Mola", d.ChannelCard: "Cartão"}
 	stName := map[d.SupportStatus]string{d.SupportConfirmed: "Confirmado", d.SupportPending: "Pendente", d.SupportFailed: "Falhou", d.SupportExpired: "Expirou"}
 	for _, x := range items {
+		if x.Status != d.SupportConfirmed {
+			x.SupporterName, x.Message = "", ""
+		}
 		contact := d.FormatMZPhone(x.PayerPhone)
 		if x.Channel == d.ChannelCard {
 			contact = x.CardBrand + " " + x.CardLast4
@@ -950,4 +972,11 @@ func (s *Server) adminWithdrawalPDF(c *gin.Context) {
 func (s *Server) adminWithdrawalsPDF(c *gin.Context) {
 	b, name, err := s.app.AdminPaymentOrdersPDF(c.Request.Context(), user(c), "", d.WithdrawalStatus(c.DefaultQuery("status", "approved")))
 	s.sendPDF(c, b, name, err)
+}
+
+func maskPhone(n string) string {
+	if len(n) != 9 {
+		return ""
+	}
+	return n[:2] + " ••• " + n[5:]
 }

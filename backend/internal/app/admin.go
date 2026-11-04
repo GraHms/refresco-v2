@@ -311,7 +311,7 @@ type AdminWithdrawal struct {
 }
 
 type AdminWithdrawals struct {
-	Items   []AdminWithdrawal                 `json:"items"`
+	Items   []AdminWithdrawal                `json:"items"`
 	Summary map[string]WithdrawalSummaryItem `json:"summary"`
 }
 
@@ -540,7 +540,7 @@ func (a *App) AdminCreateInvite(ctx context.Context, u *d.User, in InviteInput) 
 	}
 	base := codeBase(in.Note)
 	for i := 0; i < 5; i++ {
-		inv := &d.Invite{Code: base + "-" + randCode(4, "23456789ABCDEFGHJKMNPQRSTUVWXYZ"), Note: note, MaxUses: in.MaxUses, FeeBPS: in.FeeBPS, Status: d.InviteActive, CreatedAt: a.now()}
+		inv := &d.Invite{Code: base + "-" + randCode(10, "23456789ABCDEFGHJKMNPQRSTUVWXYZ"), Note: note, MaxUses: in.MaxUses, FeeBPS: in.FeeBPS, Status: d.InviteActive, CreatedAt: a.now()}
 		err := a.Store.Invites().Create(ctx, inv)
 		if err == nil {
 			return &InviteRow{Code: inv.Code, Note: inv.Note, MaxUses: inv.MaxUses, UsedBy: []string{}, FeeBPS: inv.FeeBPS, Status: inv.Status, CreatedAt: inv.CreatedAt}, nil

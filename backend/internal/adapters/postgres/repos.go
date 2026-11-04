@@ -36,7 +36,9 @@ func (r userRepo) first(ctx context.Context, q string, v any) (*d.User, error) {
 	return toUser(&m), nil
 }
 
-func (r userRepo) ByID(ctx context.Context, id string) (*d.User, error) { return r.first(ctx, "id = ?", id) }
+func (r userRepo) ByID(ctx context.Context, id string) (*d.User, error) {
+	return r.first(ctx, "id = ?", id)
+}
 func (r userRepo) ByEmail(ctx context.Context, e string) (*d.User, error) {
 	return r.first(ctx, "email = ?", e)
 }
@@ -276,7 +278,7 @@ func toSupport(m *supportModel) d.Support {
 	return d.Support{ID: m.ID, Ref: m.Ref, AccountID: m.AccountID, Amount: d.Money(m.Amount), FeeBPS: d.BPS(m.FeeBPS), Fee: d.Money(m.Fee), Net: d.Money(m.Net),
 		Preset: m.Preset, Channel: d.Channel(m.Channel), PayerPhone: m.PayerPhone, CardBrand: m.CardBrand, CardLast4: m.CardLast4,
 		SupporterName: m.SupporterName, SupporterNet: m.SupporterNet, Message: m.Message, Status: d.SupportStatus(m.Status), FailReason: m.FailReason,
-		ProviderRef: deref(m.ProviderRef), NextAction: m.NextAction, ExpiresAt: m.ExpiresAt, IdemKey: deref(m.IdemKey), ReadAt: m.ReadAt,
+		ProviderRef: deref(m.ProviderRef), NextAction: m.NextAction, Pushes: m.Pushes, ExpiresAt: m.ExpiresAt, IdemKey: deref(m.IdemKey), ReadAt: m.ReadAt,
 		ConfirmedAt: m.ConfirmedAt, CreatedAt: m.CreatedAt}
 }
 
@@ -284,7 +286,7 @@ func fromSupport(s *d.Support) *supportModel {
 	m := &supportModel{ID: s.ID, Ref: s.Ref, AccountID: s.AccountID, Amount: int64(s.Amount), FeeBPS: int(s.FeeBPS), Fee: int64(s.Fee), Net: int64(s.Net),
 		Preset: s.Preset, Channel: string(s.Channel), PayerPhone: s.PayerPhone, CardBrand: s.CardBrand, CardLast4: s.CardLast4,
 		SupporterName: s.SupporterName, SupporterNet: s.SupporterNet, Message: s.Message, Status: string(s.Status), FailReason: s.FailReason,
-		ProviderRef: strPtr(s.ProviderRef), NextAction: s.NextAction, ExpiresAt: s.ExpiresAt, IdemKey: strPtr(s.IdemKey), ReadAt: s.ReadAt,
+		ProviderRef: strPtr(s.ProviderRef), NextAction: s.NextAction, Pushes: s.Pushes, ExpiresAt: s.ExpiresAt, IdemKey: strPtr(s.IdemKey), ReadAt: s.ReadAt,
 		ConfirmedAt: s.ConfirmedAt, CreatedAt: s.CreatedAt}
 	if s.IdemKey != "" {
 		m.IdemAccount = &m.AccountID
@@ -724,4 +726,13 @@ func (r sessionRepo) RevokeUser(ctx context.Context, uid string, at time.Time) e
 func (r sessionRepo) Purge(ctx context.Context, before time.Time) (int64, error) {
 	res := r.db.WithContext(ctx).Where("expires_at < ?", before).Delete(&sessionModel{})
 	return res.RowsAffected, res.Error
+}
+
+func (r supportRepo) PushesSince(ctx context.Context, phone string, since time.Time) (int64, error) {
+	var n *int64
+	err := r.db.WithContext(ctx).Model(&supportModel{}).Select("SUM(pushes)").Where("payer_phone = ? AND created_at >= ?", phone, since).Scan(&n).Error
+	if err != nil || n == nil {
+		return 0, err
+	}
+	return *n, nil
 }

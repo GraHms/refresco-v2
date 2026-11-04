@@ -170,10 +170,10 @@ func TestDonationLifecycle(t *testing.T) {
 	if err := a.AdminActOnWithdrawal(ctx, root, wd2.ID, app.WithdrawalAction{Action: "reject", Reason: "NIB inválido"}); err == nil {
 		t.Fatal("rejected a paid withdrawal")
 	}
-	if _, err := a.AddPayoutAccount(ctx, cr, app.PayoutAccountInput{Kind: d.PayoutNIB, Number: "000800000412345678101", Bank: "BCI"}); err == nil {
+	if _, err := a.AddPayoutAccount(ctx, cr, app.PayoutAccountInput{Kind: d.PayoutNIB, Number: "000800000412345678101", Bank: "BCI", Password: "password-123"}); err == nil {
 		t.Fatal("NIB without holder accepted")
 	}
-	nib, err := a.AddPayoutAccount(ctx, cr, app.PayoutAccountInput{Kind: d.PayoutNIB, Number: "0008 0000 0412 3456 7810 1", Bank: "BCI", Holder: "  Banda   Teste Lda "})
+	nib, err := a.AddPayoutAccount(ctx, cr, app.PayoutAccountInput{Kind: d.PayoutNIB, Number: "0008 0000 0412 3456 7810 1", Bank: "BCI", Holder: "  Banda   Teste Lda ", Password: "password-123"})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"regexp"
 	"strings"
 	"time"
 )
@@ -62,6 +63,8 @@ func (c ChannelSet) Has(ch Channel) bool {
 func (c ChannelSet) Any() bool { return c.Mpesa || c.Emola || c.Card }
 
 var SocialNetworks = []string{"youtube", "spotify", "instagram", "tiktok", "facebook", "x"}
+
+var socialRe = regexp.MustCompile(`^@?[A-Za-z0-9._-]{1,60}$`)
 
 var Categories = []string{"Podcast", "Música", "Arte e ilustração", "Comédia", "Educação", "Vídeo e streaming"}
 
@@ -141,7 +144,7 @@ func (a *Account) ValidatePage() error {
 		if v == "" {
 			continue
 		}
-		if len(v) > 80 || strings.ContainsAny(v, " <>\"'`") {
+		if !socialRe.MatchString(v) {
 			return Invalid("invalid_social", "Utilizador de rede social inválido: "+k+".")
 		}
 		clean[k] = v
@@ -230,6 +233,7 @@ type Support struct {
 	FailReason    string
 	ProviderRef   string
 	NextAction    string
+	Pushes        int
 	ExpiresAt     time.Time
 	IdemKey       string
 	ReadAt        *time.Time

@@ -13,6 +13,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -142,15 +143,22 @@ type webhook struct {
 	Reason      string `json:"reason"`
 }
 
-func (g *Gateway) Sign(body []byte) string {
+// Sign returns the signature for a webhook sent at unix time ts.
+func (g *Gateway) Sign(ts string, body []byte) string {
 	h := hmac.New(sha256.New, g.secret)
+	h.Write([]byte(ts + "."))
 	h.Write(body)
 	return hex.EncodeToString(h.Sum(nil))
 }
 
 func (g *Gateway) ParseWebhook(h http.Header, body []byte) (string, ports.PaymentState, error) {
+	ts := h.Get("X-Mock-Timestamp")
+	sec, err := strconv.ParseInt(ts, 10, 64)
+	if err != nil || g.now().Sub(time.Unix(sec, 0)).Abs() > 5*time.Minute {
+		return "", ports.PaymentState{}, errors.New("stale or missing timestamp")
+	}
 	sig, err := hex.DecodeString(h.Get("X-Mock-Signature"))
-	if err != nil || !hmac.Equal(sig, mustHex(g.Sign(body))) {
+	if err != nil || !hmac.Equal(sig, mustHex(g.Sign(ts, body))) {
 		return "", ports.PaymentState{}, errors.New("bad signature")
 	}
 	var w webhook

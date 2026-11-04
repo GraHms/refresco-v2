@@ -42,7 +42,7 @@ func Build(cfg config.Config, log *slog.Logger) (*app.App, *gorm.DB, error) {
 		PublicURL:     cfg.PublicURL,
 		Location:      loc,
 		AllowSimulate: cfg.AllowSimulate,
+		Sandbox:       cfg.Sandbox,
 	})
 	return a, db, nil
 }
-
