@@ -131,7 +131,7 @@ function Register({ pw, onCreated }: { pw: Pw; onCreated: (h: string) => void })
   const [code, setCode] = useState((params.get('convite') || '').toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 24));
   const [cs, setCs] = useState<'idle' | 'ok' | 'bad' | 'used' | 'empty'>('idle');
   const [checking, setChecking] = useState(false);
-  const [name, setName] = useState(''); const [handle, setHandle] = useState(''); const [touched, setTouched] = useState(false);
+  const [name, setName] = useState(''); const [handle, setHandle] = useState((params.get('handle') || '').toLowerCase().replace(/[^a-z0-9.]/g, '').slice(0, 24)); const [touched, setTouched] = useState(!!params.get('handle'));
   const [email, setEmail] = useState(''); const [phone, setPhone] = useState(''); const [p, setP] = useState(''); const [terms, setTerms] = useState(false);
   const [tried, setTried] = useState(false); const [busy, setBusy] = useState(false); const [err, setErr] = useState('');
   const [avail, setAvail] = useState<{ h: string; ok: boolean; why: string } | null>(null);

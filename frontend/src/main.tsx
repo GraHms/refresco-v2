@@ -10,8 +10,9 @@ import { ToastProvider } from './components/ui';
 import ErrorBoundary from './components/ErrorBoundary';
 import SupportPage from './pages/SupportPage';
 import Auth, { homeFor } from './pages/Auth';
-import { Landing, SplitApproval } from './pages/Misc';
+import { SplitApproval } from './pages/Misc';
 
+const Landing = lazy(() => import('./pages/Landing'));
 const BackofficeLayout = lazy(() => import('./pages/backoffice/Layout'));
 const Overview = lazy(() => import('./pages/backoffice/Overview'));
 const Inbox = lazy(() => import('./pages/backoffice/Inbox'));
