@@ -17,7 +17,7 @@ import (
 type userRepo struct{ db *gorm.DB }
 
 func toUser(m *userModel) *d.User {
-	return &d.User{ID: m.ID, Email: m.Email, Phone: deref(m.Phone), Name: m.Name, PasswordHash: m.PasswordHash, Role: d.Role(m.Role), TokenVersion: m.TokenVersion, CreatedAt: m.CreatedAt}
+	return &d.User{ID: m.ID, Email: m.Email, Phone: deref(m.Phone), Name: m.Name, PasswordHash: m.PasswordHash, Role: d.Role(m.Role), TokenVersion: m.TokenVersion, FailedLogins: m.FailedLogins, LockedUntil: m.LockedUntil, CreatedAt: m.CreatedAt}
 }
 
 func fromUser(u *d.User) *userModel {
@@ -678,4 +678,50 @@ type ledgerRepo struct{ db *gorm.DB }
 
 func (r ledgerRepo) Add(ctx context.Context, e ports.LedgerEntry) error {
 	return r.db.WithContext(ctx).Create(&ledgerModel{MemberID: e.MemberID, AccountID: e.AccountID, Kind: e.Kind, Amount: int64(e.Amount), Ref: e.Ref, CreatedAt: e.CreatedAt}).Error
+}
+
+func (r userRepo) RecordLoginFailure(ctx context.Context, id string, max int, lockUntil time.Time) error {
+	return r.db.WithContext(ctx).Exec(`UPDATE users SET
+		locked_until = CASE WHEN failed_logins + 1 >= ? THEN ?::timestamptz ELSE locked_until END,
+		failed_logins = CASE WHEN failed_logins + 1 >= ? THEN 0 ELSE failed_logins + 1 END
+		WHERE id = ?`, max, lockUntil, max, id).Error
+}
+
+func (r userRepo) ClearLoginFailures(ctx context.Context, id string) error {
+	return r.db.WithContext(ctx).Model(&userModel{}).Where("id = ? AND (failed_logins <> 0 OR locked_until IS NOT NULL)", id).
+		Updates(map[string]any{"failed_logins": 0, "locked_until": nil}).Error
+}
+
+func (r resetRepo) Since(ctx context.Context, uid string, since time.Time) (int64, int64, error) {
+	var row struct{ Codes, Attempts int64 }
+	err := r.db.WithContext(ctx).Model(&resetModel{}).Select("COUNT(*) AS codes, COALESCE(SUM(attempts), 0) AS attempts").
+		Where("user_id = ? AND created_at >= ?", uid, since).Scan(&row).Error
+	return row.Codes, row.Attempts, err
+}
+
+type sessionRepo struct{ db *gorm.DB }
+
+func (r sessionRepo) Create(ctx context.Context, s *d.Session) error {
+	return r.db.WithContext(ctx).Create(&sessionModel{ID: s.ID, UserID: s.UserID, ExpiresAt: s.ExpiresAt, CreatedAt: s.CreatedAt}).Error
+}
+
+func (r sessionRepo) ByID(ctx context.Context, id string) (*d.Session, error) {
+	var m sessionModel
+	if err := r.db.WithContext(ctx).Where("id = ?", id).First(&m).Error; err != nil {
+		return nil, mapErr(err)
+	}
+	return &d.Session{ID: m.ID, UserID: m.UserID, ExpiresAt: m.ExpiresAt, RevokedAt: m.RevokedAt, CreatedAt: m.CreatedAt}, nil
+}
+
+func (r sessionRepo) Revoke(ctx context.Context, id string, at time.Time) error {
+	return r.db.WithContext(ctx).Model(&sessionModel{}).Where("id = ? AND revoked_at IS NULL", id).Update("revoked_at", at).Error
+}
+
+func (r sessionRepo) RevokeUser(ctx context.Context, uid string, at time.Time) error {
+	return r.db.WithContext(ctx).Model(&sessionModel{}).Where("user_id = ? AND revoked_at IS NULL", uid).Update("revoked_at", at).Error
+}
+
+func (r sessionRepo) Purge(ctx context.Context, before time.Time) (int64, error) {
+	res := r.db.WithContext(ctx).Where("expires_at < ?", before).Delete(&sessionModel{})
+	return res.RowsAffected, res.Error
 }

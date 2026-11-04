@@ -343,6 +343,11 @@ func (a *App) settle(ctx context.Context, tx ports.Store, s *d.Support, now time
 }
 
 func (a *App) ExpireStale(ctx context.Context) {
+	if n, err := a.Store.Sessions().Purge(ctx, a.now().Add(-24*time.Hour)); err != nil {
+		a.Log.Warn("purge sessions", "err", err)
+	} else if n > 0 {
+		a.Log.Info("purged sessions", "count", n)
+	}
 	n, err := a.Store.Supports().ExpireStale(ctx, a.now().Add(-10*time.Minute))
 	if err != nil {
 		a.Log.Warn("expire stale supports", "err", err)

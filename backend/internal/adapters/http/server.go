@@ -192,6 +192,9 @@ func (s *Server) login(c *gin.Context) {
 }
 
 func (s *Server) logout(c *gin.Context) {
+	if tok, err := c.Cookie(cookieName); err == nil && tok != "" {
+		s.app.Logout(c.Request.Context(), tok)
+	}
 	s.clearCookie(c)
 	c.Status(http.StatusNoContent)
 }

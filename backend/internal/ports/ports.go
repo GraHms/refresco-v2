@@ -22,6 +22,7 @@ type Store interface {
 	Resets() ResetRepo
 	Waitlist() WaitlistRepo
 	Ledger() LedgerRepo
+	Sessions() SessionRepo
 	Stats() StatsWriter
 }
 
@@ -31,6 +32,17 @@ type UserRepo interface {
 	ByEmail(ctx context.Context, email string) (*d.User, error)
 	ByPhone(ctx context.Context, phone string) (*d.User, error)
 	Update(ctx context.Context, u *d.User) error
+	// RecordLoginFailure increments the failure counter and locks the user once it reaches max.
+	RecordLoginFailure(ctx context.Context, id string, max int, lockUntil time.Time) error
+	ClearLoginFailures(ctx context.Context, id string) error
+}
+
+type SessionRepo interface {
+	Create(ctx context.Context, s *d.Session) error
+	ByID(ctx context.Context, id string) (*d.Session, error)
+	Revoke(ctx context.Context, id string, at time.Time) error
+	RevokeUser(ctx context.Context, userID string, at time.Time) error
+	Purge(ctx context.Context, before time.Time) (int64, error)
 }
 
 type AccountFilter struct {
@@ -134,6 +146,8 @@ type ResetRepo interface {
 	Latest(ctx context.Context, userID string) (*d.PasswordReset, error)
 	ByTokenHash(ctx context.Context, hash string) (*d.PasswordReset, error)
 	Update(ctx context.Context, r *d.PasswordReset) error
+	// Since returns how many codes were issued and how many wrong guesses were made since a time.
+	Since(ctx context.Context, userID string, since time.Time) (codes int64, attempts int64, err error)
 }
 
 type WaitlistRepo interface {
@@ -256,6 +270,7 @@ type PasswordHasher interface {
 }
 
 type Claims struct {
+	SessionID    string
 	UserID       string
 	Role         d.Role
 	TokenVersion int
@@ -263,7 +278,7 @@ type Claims struct {
 }
 
 type TokenIssuer interface {
-	Issue(u *d.User) (string, time.Time, error)
+	Issue(u *d.User, sessionID string) (string, time.Time, error)
 	Parse(token string) (*Claims, error)
 }
 

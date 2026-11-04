@@ -36,6 +36,7 @@ var (
 	ErrForbidden          = Forbidden("forbidden", "Sem permissão para esta ação.")
 	ErrInvalidCredentials = newErr(KindUnauthorized, "invalid_credentials", "Email ou palavra-passe incorretos.")
 	ErrTooManyAttempts    = newErr(KindTooMany, "too_many_attempts", "Demasiadas tentativas. Tenta mais tarde.")
+	ErrAccountLocked      = newErr(KindTooMany, "account_locked", "Demasiadas tentativas falhadas. Tenta de novo daqui a 15 minutos.")
 	ErrStaleState         = Conflict("stale_state", "O estado mudou entretanto. Atualiza e tenta de novo.")
 )
 

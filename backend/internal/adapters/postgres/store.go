@@ -75,6 +75,7 @@ func (s *Store) Resets() ports.ResetRepo                 { return resetRepo{s.db
 func (s *Store) Waitlist() ports.WaitlistRepo            { return waitlistRepo{s.db} }
 func (s *Store) Ledger() ports.LedgerRepo                { return ledgerRepo{s.db} }
 func (s *Store) Stats() ports.StatsWriter                { return statsRepo{s.db} }
+func (s *Store) Sessions() ports.SessionRepo             { return sessionRepo{s.db} }
 
 func mapErr(err error) error {
 	if err == nil {

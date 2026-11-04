@@ -14,6 +14,8 @@ type userModel struct {
 	PasswordHash string `gorm:"size:100;not null"`
 	Role         string `gorm:"size:20;not null;index"`
 	TokenVersion int    `gorm:"not null;default:0"`
+	FailedLogins int    `gorm:"not null;default:0"`
+	LockedUntil  *time.Time
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }
@@ -235,8 +237,18 @@ type dailyStatModel struct {
 
 func (dailyStatModel) TableName() string { return "daily_stats" }
 
+type sessionModel struct {
+	ID        string `gorm:"type:uuid;primaryKey"`
+	UserID    string `gorm:"type:uuid;not null;index"`
+	ExpiresAt time.Time `gorm:"not null;index"`
+	RevokedAt *time.Time
+	CreatedAt time.Time
+}
+
+func (sessionModel) TableName() string { return "sessions" }
+
 func allModels() []any {
 	return []any{&userModel{}, &accountModel{}, &memberModel{}, &payoutAccountModel{}, &supportModel{}, &supportSplitModel{},
 		&withdrawalModel{}, &inviteModel{}, &proposalModel{}, &approvalModel{}, &auditModel{}, &resetModel{}, &waitlistModel{},
-		&ledgerModel{}, &dailyStatModel{}}
+		&ledgerModel{}, &dailyStatModel{}, &sessionModel{}}
 }

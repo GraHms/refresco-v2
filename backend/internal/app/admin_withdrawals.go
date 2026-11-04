@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"sort"
+	"time"
 
 	d "github.com/refresco/refresco-v2/backend/internal/domain"
 	"github.com/refresco/refresco-v2/backend/internal/ports"
@@ -19,6 +20,8 @@ type AdminWithdrawalDetail struct {
 	OwnerPhone    string           `json:"owner_phone"`
 	Recent        []WithdrawalView `json:"recent"`
 	PaidTotal     d.Money          `json:"paid_total"`
+	DestAddedAt   *time.Time       `json:"dest_added_at,omitempty"`
+	DestFirstUse  bool             `json:"dest_first_use"`
 }
 
 func (a *App) memberOrGhost(ctx context.Context, id string) *d.Member {
@@ -53,9 +56,21 @@ func (a *App) AdminWithdrawal(ctx context.Context, u *d.User, id string) (*Admin
 	if err != nil {
 		return nil, err
 	}
+	if accts, err := a.Store.PayoutAccounts().ByMember(ctx, w.MemberID); err == nil {
+		for _, p := range accts {
+			if p.Kind == w.DestKind && p.Number == w.DestNumber {
+				t := p.CreatedAt
+				out.DestAddedAt = &t
+			}
+		}
+	}
+	out.DestFirstUse = true
 	for _, x := range prev {
 		if x.Status == d.WithdrawalPaid {
 			out.PaidTotal += x.Amount
+			if x.DestKind == w.DestKind && x.DestNumber == w.DestNumber {
+				out.DestFirstUse = false
+			}
 		}
 		if x.ID != w.ID && len(out.Recent) < 5 {
 			out.Recent = append(out.Recent, withdrawalView(x, m.Name, false))

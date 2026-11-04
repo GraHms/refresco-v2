@@ -34,10 +34,10 @@ type claims struct {
 	jwt.RegisteredClaims
 }
 
-func (j JWT) Issue(u *d.User) (string, time.Time, error) {
+func (j JWT) Issue(u *d.User, sessionID string) (string, time.Time, error) {
 	exp := time.Now().Add(j.TTL)
 	c := claims{Role: string(u.Role), Ver: u.TokenVersion, RegisteredClaims: jwt.RegisteredClaims{
-		Subject: u.ID, Issuer: j.Issuer, Audience: jwt.ClaimStrings{j.Issuer}, IssuedAt: jwt.NewNumericDate(time.Now()), ExpiresAt: jwt.NewNumericDate(exp),
+		ID: sessionID, Subject: u.ID, Issuer: j.Issuer, Audience: jwt.ClaimStrings{j.Issuer}, IssuedAt: jwt.NewNumericDate(time.Now()), ExpiresAt: jwt.NewNumericDate(exp),
 	}}
 	s, err := jwt.NewWithClaims(jwt.SigningMethodHS256, c).SignedString(j.Secret)
 	return s, exp, err
@@ -50,7 +50,10 @@ func (j JWT) Parse(tok string) (*ports.Claims, error) {
 	if err != nil || !t.Valid {
 		return nil, errors.New("invalid token")
 	}
-	return &ports.Claims{UserID: c.Subject, Role: d.Role(c.Role), TokenVersion: c.Ver, ExpiresAt: c.ExpiresAt.Time}, nil
+	if c.ID == "" {
+		return nil, errors.New("token without session")
+	}
+	return &ports.Claims{SessionID: c.ID, UserID: c.Subject, Role: d.Role(c.Role), TokenVersion: c.Ver, ExpiresAt: c.ExpiresAt.Time}, nil
 }
 
 type SystemClock struct{}

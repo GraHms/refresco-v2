@@ -153,14 +153,18 @@ func (a *App) Wallet(ctx context.Context, c *Creator) (*WalletView, error) {
 type PayoutAccountInput struct {
 	Kind   d.PayoutKind `json:"kind"`
 	Number string       `json:"number"`
-	Bank   string       `json:"bank"`
-	Holder string       `json:"holder"`
-	IsMain bool         `json:"is_main"`
+	Bank     string       `json:"bank"`
+	Holder   string       `json:"holder"`
+	IsMain   bool         `json:"is_main"`
+	Password string       `json:"password"`
 }
 
 var banks = map[string]bool{"BCI": true, "Millennium bim": true, "Standard Bank": true, "Absa": true, "Moza Banco": true, "FNB": true, "Nedbank": true, "Access Bank": true, "Ecobank": true, "Letshego": true}
 
 func (a *App) AddPayoutAccount(ctx context.Context, c *Creator, in PayoutAccountInput) (*PayoutAccountView, error) {
+	if err := a.ConfirmPassword(ctx, c.User.ID, in.Password); err != nil {
+		return nil, err
+	}
 	p := &d.PayoutAccount{ID: newID(), MemberID: c.Member.ID, Kind: in.Kind, IsMain: in.IsMain, CreatedAt: a.now()}
 	switch in.Kind {
 	case d.PayoutMpesa, d.PayoutEmola:
@@ -211,6 +215,19 @@ func (a *App) AddPayoutAccount(ctx context.Context, c *Creator, in PayoutAccount
 	if err != nil {
 		return nil, err
 	}
+	label := "M-Pesa " + d.FormatMZPhone(p.Number)
+	switch p.Kind {
+	case d.PayoutEmola:
+		label = "e-Mola " + d.FormatMZPhone(p.Number)
+	case d.PayoutNIB:
+		label = p.BankName + " NIB terminado em " + p.Number[len(p.Number)-5:]
+	}
+	notice := "refres.co: foi adicionada a conta de levantamento " + label + " a " + c.Account.Name + ". Se não foste tu, muda a palavra-passe e contacta-nos."
+	a.notify(ctx, ports.Message{To: d.FormatMZPhone(c.Member.WalletNumber), Kind: "payout_account_added", Body: notice})
+	if c.User.Email != "" {
+		a.notify(ctx, ports.Message{To: c.User.Email, Kind: "payout_account_added", Body: notice})
+	}
+	_ = a.audit(ctx, a.Store, c.Account.ID, "account", c.Member.Name+" adicionou a conta de levantamento "+label)
 	v := payoutView(*p)
 	return &v, nil
 }

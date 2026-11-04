@@ -16,6 +16,10 @@ const (
 	resetTokenTTL     = 15 * time.Minute
 	resetResendAfter  = 45 * time.Second
 	resetMaxAttempts  = 5
+	resetDailyCodes   = 5
+	resetDailyGuesses = 10
+	loginMaxFailures  = 10
+	loginLockFor      = 15 * time.Minute
 )
 
 type Session struct {
@@ -59,23 +63,77 @@ func (a *App) Login(ctx context.Context, identifier, password string) (*Session,
 		}
 		return nil, err
 	}
-	if !a.Hasher.Compare(u.PasswordHash, password) {
-		return nil, d.ErrInvalidCredentials
+	if err := a.checkPassword(ctx, u, password); err != nil {
+		return nil, err
 	}
-	return a.issue(u)
+	return a.issue(ctx, u)
 }
 
-func (a *App) issue(u *d.User) (*Session, error) {
-	tok, exp, err := a.Tokens.Issue(u)
+// checkPassword verifies a password and applies the per-account lockout.
+func (a *App) checkPassword(ctx context.Context, u *d.User, password string) error {
+	now := a.now()
+	if u.LockedUntil != nil && now.Before(*u.LockedUntil) {
+		a.Hasher.Compare(a.dummyHash, password)
+		return d.ErrAccountLocked
+	}
+	if !a.Hasher.Compare(u.PasswordHash, password) {
+		if err := a.Store.Users().RecordLoginFailure(ctx, u.ID, loginMaxFailures, now.Add(loginLockFor)); err != nil {
+			a.Log.Warn("record login failure", "err", err)
+		}
+		return d.ErrInvalidCredentials
+	}
+	if u.FailedLogins != 0 || u.LockedUntil != nil {
+		_ = a.Store.Users().ClearLoginFailures(ctx, u.ID)
+	}
+	return nil
+}
+
+// ConfirmPassword re-authenticates the signed-in user before a sensitive action.
+func (a *App) ConfirmPassword(ctx context.Context, userID, password string) error {
+	u, err := a.Store.Users().ByID(ctx, userID)
 	if err != nil {
+		return d.ErrUnauthorized
+	}
+	if err := a.checkPassword(ctx, u, password); err != nil {
+		if errors.Is(err, d.ErrInvalidCredentials) {
+			return d.Invalid("wrong_password", "Palavra-passe incorreta.")
+		}
+		return err
+	}
+	return nil
+}
+
+func (a *App) issue(ctx context.Context, u *d.User) (*Session, error) {
+	now := a.now()
+	sid := newID()
+	tok, exp, err := a.Tokens.Issue(u, sid)
+	if err != nil {
+		return nil, err
+	}
+	if err := a.Store.Sessions().Create(ctx, &d.Session{ID: sid, UserID: u.ID, ExpiresAt: exp, CreatedAt: now}); err != nil {
 		return nil, err
 	}
 	return &Session{User: u, Token: tok, ExpiresAt: exp}, nil
 }
 
+// Logout revokes the session behind a token, even if it has otherwise expired.
+func (a *App) Logout(ctx context.Context, token string) {
+	c, err := a.Tokens.Parse(token)
+	if err != nil {
+		return
+	}
+	if err := a.Store.Sessions().Revoke(ctx, c.SessionID, a.now()); err != nil {
+		a.Log.Warn("revoke session", "err", err)
+	}
+}
+
 func (a *App) Authenticate(ctx context.Context, token string) (*d.User, error) {
 	c, err := a.Tokens.Parse(token)
 	if err != nil {
+		return nil, d.ErrUnauthorized
+	}
+	s, err := a.Store.Sessions().ByID(ctx, c.SessionID)
+	if err != nil || s.UserID != c.UserID || s.RevokedAt != nil || a.now().After(s.ExpiresAt) {
 		return nil, d.ErrUnauthorized
 	}
 	u, err := a.Store.Users().ByID(ctx, c.UserID)
@@ -243,7 +301,7 @@ func (a *App) Register(ctx context.Context, in RegisterInput) (*Session, error) 
 	if err != nil {
 		return nil, err
 	}
-	return a.issue(u)
+	return a.issue(ctx, u)
 }
 
 func firstName(n string) string {
@@ -274,6 +332,14 @@ func (a *App) ForgotPassword(ctx context.Context, identifier string) error {
 	if last, err := a.Store.Resets().Latest(ctx, u.ID); err == nil && now.Sub(last.CreatedAt) < resetResendAfter {
 		return nil
 	}
+	codes, guesses, err := a.Store.Resets().Since(ctx, u.ID, now.Add(-24*time.Hour))
+	if err != nil {
+		return err
+	}
+	if codes >= resetDailyCodes || guesses >= resetDailyGuesses {
+		a.Log.Warn("password reset capped", "user", u.ID, "codes", codes, "guesses", guesses)
+		return nil
+	}
 	code := randDigits(6)
 	r := &d.PasswordReset{ID: newID(), UserID: u.ID, ExpiresAt: now.Add(resetCodeTTL), CreatedAt: now}
 	r.CodeHash = a.mac("reset", r.ID, code)
@@ -300,6 +366,11 @@ func (a *App) VerifyResetCode(ctx context.Context, identifier, code string) (str
 		return "", bad
 	}
 	if r.Attempts >= resetMaxAttempts {
+		return "", d.ErrTooManyAttempts
+	}
+	if _, guesses, err := a.Store.Resets().Since(ctx, u.ID, now.Add(-24*time.Hour)); err != nil {
+		return "", err
+	} else if guesses >= resetDailyGuesses {
 		return "", d.ErrTooManyAttempts
 	}
 	if !hmacEqual(r.CodeHash, a.mac("reset", r.ID, strings.TrimSpace(code))) {
@@ -338,6 +409,12 @@ func (a *App) ResetPassword(ctx context.Context, token, password string) error {
 		}
 		u.PasswordHash = hash
 		u.TokenVersion++
+		if err := s.Sessions().RevokeUser(ctx, u.ID, now); err != nil {
+			return err
+		}
+		if err := s.Users().ClearLoginFailures(ctx, u.ID); err != nil {
+			return err
+		}
 		r.UsedAt = &now
 		if err := s.Users().Update(ctx, u); err != nil {
 			return err

@@ -20,7 +20,17 @@ type User struct {
 	PasswordHash string
 	Role         Role
 	TokenVersion int
+	FailedLogins int
+	LockedUntil  *time.Time
 	CreatedAt    time.Time
+}
+
+type Session struct {
+	ID        string
+	UserID    string
+	ExpiresAt time.Time
+	RevokedAt *time.Time
+	CreatedAt time.Time
 }
 
 type AccountStatus string
