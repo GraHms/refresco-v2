@@ -34,13 +34,13 @@ export type Money = number;
 export interface Page {
   id: string; name: string; handle: string; category: string; bio: string; thanks: string;
   amounts: Money[]; default_idx: number; allow_custom: boolean; min_amount: Money;
-  socials: Record<string, string>; channels: { mpesa: boolean; emola: boolean; card: boolean }; sandbox?: boolean;
+  socials: Record<string, string>; channels: { mpesa: boolean; emola: boolean; card: boolean }; sandbox?: boolean; coming_soon?: Channel[];
 }
 
 export interface Me {
   id: string; name: string; email: string; role: 'creator' | 'superadmin';
   account?: Page; member?: { id: string; name: string; role: string; is_admin: boolean; pct: number };
-  account_status?: 'active' | 'pending' | 'suspended'; sandbox?: boolean;
+  account_status?: 'active' | 'pending' | 'suspended'; sandbox?: boolean; coming_soon?: Channel[];
 }
 
 export interface SupportStatus {

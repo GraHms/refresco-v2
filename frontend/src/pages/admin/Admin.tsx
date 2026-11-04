@@ -186,7 +186,7 @@ function AccountDrawer({ id, onClose, onChanged }: { id: string; onClose: () => 
     <Drawer onClose={onClose} label={a.name}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '18px 18px 16px', borderBottom: '1px solid #F2EAE0' }}>
         <span className="avatar" style={{ width: 46, height: 46, borderRadius: 14, background: bg, color: fg, fontSize: 14 }}>{ini(a.name)}</span>
-        <span style={{ flex: 1, minWidth: 0, lineHeight: 1.3 }}><span style={{ display: 'block', fontWeight: 700, fontSize: 16 }}>{a.name}</span><span className="mono" style={{ display: 'block', fontSize: 12, color: '#6E6861' }}>refres.co/{a.handle}</span></span>
+        <span style={{ flex: 1, minWidth: 0, lineHeight: 1.3 }}><span style={{ display: 'block', fontWeight: 700, fontSize: 16 }}>{a.name}</span><span className="mono" style={{ display: 'block', fontSize: 12, color: '#6E6861' }}>pagarefresco.com/{a.handle}</span></span>
         <Badge st={AST[a.status]} dot={false} />
         <button className="icon-btn" onClick={onClose} aria-label="Fechar"><X size={17} /></button>
       </div>
@@ -372,7 +372,7 @@ function WithdrawalDrawer({ id, version, onClose, busy, onApprove, onComplete, o
         </div>
         {section('Beneficiário')}
         <div style={box}>
-          {([['Membro', `${w.member_name}${w.member_role ? ' · ' + w.member_role : ''} · ${w.member_pct}%`], ['Contacto', w.member_phone], ['Conta', `${w.account_name} · refres.co/${w.account_handle}`], ['Estado da conta', AST[w.account_status][0]], ['Responsável', `${w.owner_name} · ${w.owner_email}`], ['Saldo atual', mt(w.balance, 2)], ['Já levantado', mt(w.paid_total, 2)]] as const).map(([k, v], i) =>
+          {([['Membro', `${w.member_name}${w.member_role ? ' · ' + w.member_role : ''} · ${w.member_pct}%`], ['Contacto', w.member_phone], ['Conta', `${w.account_name} · pagarefresco.com/${w.account_handle}`], ['Estado da conta', AST[w.account_status][0]], ['Responsável', `${w.owner_name} · ${w.owner_email}`], ['Saldo atual', mt(w.balance, 2)], ['Já levantado', mt(w.paid_total, 2)]] as const).map(([k, v], i) =>
             <div key={k} style={{ display: 'flex', gap: 10, padding: '10px 14px', borderTop: i ? '1px solid #F0EBE3' : 0 }}><span style={{ width: 120, flex: 'none', color: '#6E6861' }}>{k}</span><span style={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere' }}>{v}</span></div>)}
         </div>
         {section('Histórico')}

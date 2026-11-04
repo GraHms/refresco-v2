@@ -10,7 +10,7 @@ interface Resp { page: Page; categories: string[]; can_edit: boolean }
 
 export default function PageSettings() {
   const { mobile, full } = useBo();
-  const { refresh } = useSession();
+  const { me, refresh } = useSession();
   const toast = useToast();
   const [data, setData] = useState<Resp | null>(null);
   const [pg, setPg] = useState<Page | null>(null);
@@ -36,7 +36,8 @@ export default function PageSettings() {
     : h === saved.handle ? { text: 'É o teu link atual.', color: '#6E6861', bad: false }
       : !avail || avail.h !== h ? { text: 'A verificar…', color: '#6E6861', bad: true }
         : !avail.ok ? { text: 'Este link já está ocupado.', color: '#A83700', bad: true } : { text: 'Disponível!', color: '#17803D', bad: false };
-  const noChannel = !pg.channels.mpesa && !pg.channels.emola && !pg.channels.card;
+  const soon: string[] = me?.coming_soon || [];
+  const noChannel = !(['mpesa', 'emola', 'card'] as const).some(k => pg.channels[k] && !soon.includes(k));
 
   async function save() {
     if (hs.bad) { toast('Corrige o link antes de guardar', true); return; }
@@ -54,7 +55,7 @@ export default function PageSettings() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <PageHead kicker={'refres.co/' + saved.handle} title="A tua página" lead="Perfil, valores e redes, com pré-visualização ao vivo." right={<>
+      <PageHead kicker={'pagarefresco.com/' + saved.handle} title="A tua página" lead="Perfil, valores e redes, com pré-visualização ao vivo." right={<>
         {mobile && <button className="btn btn-dark" onClick={() => setPvOpen(true)}><Eye size={16} />Pré-visualizar</button>}
         <a className="btn" href={'/' + saved.handle} target="_blank" rel="noopener">Ver página<ArrowUpRight size={16} /></a>
       </>} />
@@ -75,7 +76,7 @@ export default function PageSettings() {
               </label>
             </div>
             <label className="field"><span>Link da página</span>
-              <span className="affix"><span className="pre">refres.co/</span><input className="mono" style={{ fontSize: 13.5 }} value={pg.handle} onChange={e => set({ handle: e.target.value.toLowerCase().replace(/[^a-z0-9.]/g, '').slice(0, 24) })} /></span>
+              <span className="affix"><span className="pre">pagarefresco.com/</span><input className="mono" style={{ fontSize: 13.5 }} value={pg.handle} onChange={e => set({ handle: e.target.value.toLowerCase().replace(/[^a-z0-9.]/g, '').slice(0, 24) })} /></span>
               <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: hs.color }}>{hs.color === '#17803D' ? <CircleCheck size={14} /> : hs.color === '#A83700' ? <CircleAlert size={14} /> : <LinkIcon size={14} />}{hs.text}</span>
             </label>
             <label className="field"><span style={{ display: 'flex', justifyContent: 'space-between' }}><span>Bio</span><span className="mono" style={{ fontSize: 12, fontWeight: 400, color: '#6E6861' }}>{pg.bio.length}/200</span></span>
@@ -136,7 +137,9 @@ export default function PageSettings() {
                   <span style={{ display: 'block', fontWeight: 600 }}>{k === 'card' ? 'Cartão bancário' : CH[k].name}</span>
                   <span style={{ display: 'block', fontSize: 13, color: '#6E6861' }}>{k === 'mpesa' ? 'Fãs Vodacom confirmam com o PIN M-Pesa' : k === 'emola' ? 'Fãs Movitel confirmam com o PIN e-Mola' : 'Visa e Mastercard, com confirmação do banco'}</span>
                 </span>
-                <Toggle on={pg.channels[k]} onClick={() => set({ channels: { ...pg.channels, [k]: !pg.channels[k] } })} label={CH[k].name} />
+                {soon.includes(k)
+                  ? <span style={{ flex: 'none', padding: '4px 10px', borderRadius: 999, background: '#FDE9DC', color: '#A83700', fontSize: 12, fontWeight: 600 }}>Em breve</span>
+                  : <Toggle on={pg.channels[k]} onClick={() => set({ channels: { ...pg.channels, [k]: !pg.channels[k] } })} label={CH[k].name} />}
               </div>
             ))}
             {noChannel && <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: 12, background: '#FDE9DC', color: '#A83700', fontSize: 13, fontWeight: 600 }}><CircleAlert size={15} />Ativa pelo menos uma forma de pagamento.</div>}
@@ -171,6 +174,7 @@ export default function PageSettings() {
 }
 
 function Preview({ pg }: { pg: Page }) {
+  const soon: string[] = useSession().me?.coming_soon || [];
   const socials = SOCIALS.filter(s => (pg.socials[s.key] || '').trim());
   return (
     <div style={{ width: '100%', maxWidth: 340, height: 640, flex: 'none', borderRadius: 44, background: '#1A1410', padding: 10, boxShadow: '0 30px 60px -30px rgba(20,18,16,.45)' }}>
@@ -193,7 +197,7 @@ function Preview({ pg }: { pg: Page }) {
             </div>
             {pg.allow_custom && <span style={{ height: 32, borderRadius: 10, background: '#F8F5EF', border: '1px solid #ECE7DF', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 10px', fontSize: 10.5, color: '#57524B' }}><span>Outro valor</span><span className="mono">mín. {mtN(pg.min_amount)} MT</span></span>}
             <div style={{ display: 'flex', gap: 4, justifyContent: 'center', flexWrap: 'wrap' }}>
-              {(['mpesa', 'emola', 'card'] as const).filter(k => pg.channels[k]).map(k => <span key={k} style={{ padding: '2px 6px', borderRadius: 5, background: CH[k].bg, color: CH[k].fg, fontSize: 9.5, fontWeight: 600 }}>{CH[k].name}</span>)}
+              {(['mpesa', 'emola', 'card'] as const).filter(k => pg.channels[k] && !soon.includes(k)).map(k => <span key={k} style={{ padding: '2px 6px', borderRadius: 5, background: CH[k].bg, color: CH[k].fg, fontSize: 9.5, fontWeight: 600 }}>{CH[k].name}</span>)}
             </div>
             <span style={{ height: 36, borderRadius: 11, background: '#D14400', color: '#fff', fontWeight: 600, fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Pagar {mtN(pg.amounts[pg.default_idx] || 0)} MT</span>
           </div>

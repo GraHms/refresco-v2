@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/refresco/refresco-v2/backend/internal/domain"
 )
 
 type Config struct {
@@ -31,6 +33,18 @@ type Config struct {
 	AdminPassword     string
 	TimeZone          string
 	BcryptCost        int
+	SMTPAddr          string
+	SMTPUsername      string
+	SMTPPassword      string
+	MailFrom          string
+	MpesaBaseURL      string
+	MpesaC2BPort      string
+	MpesaQueryPort    string
+	MpesaAPIKey       string
+	MpesaPublicKey    string
+	MpesaProviderCode string
+	// ComingSoon is what can't be used yet, for payments and payouts.
+	ComingSoon domain.ChannelSet
 }
 
 func (c Config) Production() bool { return c.Env == "production" }
@@ -67,6 +81,16 @@ func Load() (Config, error) {
 		AdminEmail:        env("ADMIN_EMAIL", ""),
 		AdminPassword:     env("ADMIN_PASSWORD", ""),
 		TimeZone:          env("TIME_ZONE", "Africa/Maputo"),
+		SMTPAddr:          env("SMTP_ADDR", ""),
+		SMTPUsername:      env("SMTP_USERNAME", ""),
+		SMTPPassword:      env("SMTP_PASSWORD", ""),
+		MailFrom:          env("MAIL_FROM", "refres.co <no-reply@rihagateway.com>"),
+		MpesaBaseURL:      env("MPESA_BASE_URL", "https://api.vm.co.mz"),
+		MpesaC2BPort:      env("MPESA_C2B_PORT", "18352"),
+		MpesaQueryPort:    env("MPESA_QUERY_PORT", "18353"),
+		MpesaAPIKey:       env("MPESA_API_KEY", ""),
+		MpesaPublicKey:    env("MPESA_PUBLIC_KEY", ""),
+		MpesaProviderCode: env("MPESA_SERVICE_PROVIDER_CODE", ""),
 	}
 	if c.Env != "production" && c.Env != "development" {
 		return c, errors.New("APP_ENV must be production or development")
@@ -113,7 +137,14 @@ func Load() (Config, error) {
 		}
 	}
 	c.Sandbox = c.PaymentsProvider == "mock"
-	if c.PaymentsProvider != "mock" {
+	switch c.PaymentsProvider {
+	case "mock":
+	case "mpesa":
+		if c.MpesaAPIKey == "" || c.MpesaPublicKey == "" || c.MpesaProviderCode == "" {
+			return c, errors.New("PAYMENTS_PROVIDER=mpesa needs MPESA_API_KEY, MPESA_PUBLIC_KEY and MPESA_SERVICE_PROVIDER_CODE")
+		}
+		c.ComingSoon = domain.ChannelSet{Emola: true, Card: true}
+	default:
 		return c, errors.New("unsupported PAYMENTS_PROVIDER: " + c.PaymentsProvider)
 	}
 	return c, nil

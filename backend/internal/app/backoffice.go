@@ -135,6 +135,7 @@ func (a *App) Overview(ctx context.Context, c *Creator, key string) (*Overview, 
 			o.Split = append(o.Split, SplitRow{MemberID: m.ID, Name: m.Name, Pct: m.Pct, Wallet: string(m.Wallet), Amount: shares[i]})
 		}
 	}
+	o.Recent = make([]SupportView, 0, len(recent))
 	for _, s := range recent {
 		o.Recent = append(o.Recent, supportView(&s, nil))
 	}

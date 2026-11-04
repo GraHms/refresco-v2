@@ -43,7 +43,9 @@ Put a TLS terminating load balancer in front of `web`. `APP_ENV` defaults to `pr
 
 **Metrics are aggregates.** Every dashboard figure reads from `daily_stats` (one row per account, local day and channel, upserted on settlement) or from SQL aggregates (`SUM`, `COUNT DISTINCT`, `mode()`), never by loading and counting rows in Go.
 
-**Payments.** `PAYMENTS_PROVIDER=mock` is the only gateway for now. Wallet requests confirm after `MOCK_AUTO_CONFIRM`; numbers ending in `0000` fail (insufficient funds), `9999` never confirm. Card OTP `000000` is rejected. The SPA never sends card numbers to the API, only brand, last four digits and a gateway token. A signed webhook endpoint (`POST /api/v1/webhooks/payments`, HMAC-SHA256 in `X-Mock-Signature`) is in place for real providers. `PAYMENTS_ALLOW_SIMULATE` (off in production) enables the "tap the phone to confirm" sandbox shortcut.
+**Payments.** `PAYMENTS_PROVIDER=mpesa` takes real M-Pesa payments; `mock` is the sandbox. Wallet requests confirm after `MOCK_AUTO_CONFIRM`; numbers ending in `0000` fail (insufficient funds), `9999` never confirm. Card OTP `000000` is rejected. The SPA never sends card numbers to the API, only brand, last four digits and a gateway token. A signed webhook endpoint (`POST /api/v1/webhooks/payments`, HMAC-SHA256 in `X-Mock-Signature`) is in place for real providers. `PAYMENTS_ALLOW_SIMULATE` (off in production) enables the "tap the phone to confirm" sandbox shortcut.
+
+**M-Pesa.** The request blocks until the customer answers the prompt, so it runs on a goroutine while the app polls. A payment fails only when M-Pesa says so: a timeout, a dropped connection, `INS-1`, `INS-9` or a restart leave the outcome unknown, and the query API is asked until it answers. A background job settles payments every 5 seconds, so closing the page after the PIN still credits the creator. While a prompt may still be paid, resend is refused and cancel leaves the support pending. Withdrawals are still paid by hand. e-Mola, cards and bank payouts show as coming soon.
 
 ## Security
 
@@ -60,6 +62,10 @@ Put a TLS terminating load balancer in front of `web`. `APP_ENV` defaults to `pr
 - Per-IP rate limits on auth, payment, polling and the API in general; 64 KB request body limit; strict timeouts.
 - Row-level locking for invites, balances, supports and withdrawals; DB check constraints keep balances non-negative and invite uses within limits.
 - CSV export neutralises formula injection. nginx sets CSP, HSTS, frame, referrer and permissions headers. Containers run as non-root with a read-only filesystem and no capabilities; Postgres is on an internal network.
+
+## Email
+
+With `SMTP_ADDR` set, password reset codes, payout notices and split approvals go by email, from `MAIL_FROM`, on a background worker, so requests never wait on the mail server. Without it, notifications only go to the log. A member with no account yet, such as someone just invited to a group, has only a phone number, so their notices stay in the log until SMS is connected.
 
 ## API
 

@@ -161,9 +161,24 @@ type PayoutAccountInput struct {
 
 var banks = map[string]bool{"BCI": true, "Millennium bim": true, "Standard Bank": true, "Absa": true, "Moza Banco": true, "FNB": true, "Nedbank": true, "Access Bank": true, "Ecobank": true, "Letshego": true}
 
+var errPayoutSoon = d.Invalid("payout_coming_soon", "Por agora os levantamentos são só por M-Pesa. O e-Mola e o banco chegam em breve.")
+
+func (a *App) payoutComingSoon(k d.PayoutKind) bool {
+	switch k {
+	case d.PayoutEmola:
+		return a.ComingSoon.Emola
+	case d.PayoutNIB:
+		return a.ComingSoon.Card
+	}
+	return false
+}
+
 func (a *App) AddPayoutAccount(ctx context.Context, c *Creator, in PayoutAccountInput) (*PayoutAccountView, error) {
 	if err := a.ConfirmPassword(ctx, c.User.ID, in.Password); err != nil {
 		return nil, err
+	}
+	if a.payoutComingSoon(in.Kind) {
+		return nil, errPayoutSoon
 	}
 	p := &d.PayoutAccount{ID: newID(), MemberID: c.Member.ID, Kind: in.Kind, IsMain: in.IsMain, CreatedAt: a.now()}
 	switch in.Kind {
@@ -253,6 +268,9 @@ func (a *App) RequestWithdrawal(ctx context.Context, c *Creator, amount d.Money,
 	p, err := a.Store.PayoutAccounts().ByID(ctx, payoutID)
 	if err != nil || p.MemberID != c.Member.ID {
 		return nil, d.Invalid("invalid_destination", "Escolhe a conta de destino.")
+	}
+	if a.payoutComingSoon(p.Kind) {
+		return nil, errPayoutSoon
 	}
 	now := a.now()
 	w := &d.Withdrawal{ID: newID(), AccountID: c.Account.ID, MemberID: c.Member.ID, Amount: amount, DestKind: p.Kind, DestNumber: p.Number, DestBank: p.BankName, DestHolder: p.Holder,

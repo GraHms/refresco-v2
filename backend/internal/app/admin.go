@@ -378,6 +378,7 @@ func (a *App) AdminActOnWithdrawal(ctx context.Context, u *d.User, id string, in
 		return err
 	}
 	var notice *ports.Message
+	var member *d.Member
 	err := a.Store.Tx(ctx, func(s ports.Store) error {
 		w, err := s.Withdrawals().ByIDForUpdate(ctx, id)
 		if err != nil {
@@ -451,13 +452,13 @@ func (a *App) AdminActOnWithdrawal(ctx context.Context, u *d.User, id string, in
 		}
 		if notice != nil {
 			if m, err := s.Members().ByID(ctx, w.MemberID); err == nil {
-				notice.To = d.FormatMZPhone(m.WalletNumber)
+				member = m
 			}
 		}
 		return s.Withdrawals().Update(ctx, w)
 	})
-	if err == nil && notice != nil && notice.To != "" {
-		a.notify(ctx, *notice)
+	if err == nil && notice != nil && member != nil {
+		a.notifyMember(ctx, member, *notice)
 	}
 	return err
 }

@@ -102,6 +102,8 @@ type SupportRepo interface {
 	AddSplits(ctx context.Context, splits []d.SupportSplit) error
 	Splits(ctx context.Context, supportID string) ([]d.SupportSplit, error)
 	ExpireStale(ctx context.Context, before time.Time) (int64, error)
+	// Unsettled lists recent supports whose payment may still be confirmed.
+	Unsettled(ctx context.Context, since time.Time, limit int) ([]d.Support, error)
 	// PushesSince counts payment requests sent to a phone number, to stop prompt flooding.
 	PushesSince(ctx context.Context, phone string, since time.Time) (int64, error)
 }
@@ -251,6 +253,13 @@ type PaymentGateway interface {
 	ParseWebhook(h http.Header, body []byte) (providerRef string, st PaymentState, err error)
 }
 
+// PaymentInFlight is implemented by gateways whose request stays open while the
+// customer decides. In flight, the customer may still pay, so the request can't be
+// replaced by a new one or treated as cancelled.
+type PaymentInFlight interface {
+	InFlight(providerRef string) bool
+}
+
 // PaymentSimulator is implemented only by sandbox gateways.
 type PaymentSimulator interface {
 	Simulate(ctx context.Context, providerRef string, success bool) error
@@ -260,6 +269,9 @@ type Message struct {
 	To   string
 	Kind string
 	Body string
+	// Code and Link get their own place in an email.
+	Code string
+	Link string
 }
 
 type Notifier interface {

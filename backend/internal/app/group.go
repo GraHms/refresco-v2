@@ -133,6 +133,9 @@ func (a *App) InviteMember(ctx context.Context, c *Creator, in InviteMemberInput
 	if !in.Wallet.IsWallet() || phone == "" || d.WalletOf(phone) != in.Wallet {
 		return nil, d.Invalid("wallet_mismatch", "O número não corresponde à carteira escolhida.")
 	}
+	if a.ComingSoon.Has(in.Wallet) {
+		return nil, d.Invalid("wallet_coming_soon", "Por agora os membros só recebem por M-Pesa. O e-Mola chega em breve.")
+	}
 	m := &d.Member{ID: newID(), AccountID: c.Account.ID, Name: name, Role: role, Wallet: in.Wallet, WalletNumber: phone, Status: d.MemberInvited, CreatedAt: a.now()}
 	err := a.Store.Tx(ctx, func(s ports.Store) error {
 		existing, err := s.Members().LockByAccount(ctx, c.Account.ID)
@@ -219,7 +222,8 @@ func (a *App) ProposeSplit(ctx context.Context, c *Creator, splits []d.MemberPct
 		return nil, err
 	}
 	type pending struct {
-		phone, token string
+		member d.Member
+		token  string
 	}
 	var notes []pending
 	err := a.Store.Tx(ctx, func(s ports.Store) error {
@@ -257,7 +261,7 @@ func (a *App) ProposeSplit(ctx context.Context, c *Creator, splits []d.MemberPct
 			}
 			tok := randToken(24)
 			approvals = append(approvals, d.SplitApproval{ProposalID: p.ID, MemberID: m.ID, TokenHash: a.mac("split-approval", tok)})
-			notes = append(notes, pending{phone: m.WalletNumber, token: tok})
+			notes = append(notes, pending{member: m, token: tok})
 		}
 		if len(approvals) == 0 {
 			p.Status = d.ProposalApplied
@@ -275,7 +279,7 @@ func (a *App) ProposeSplit(ctx context.Context, c *Creator, splits []d.MemberPct
 		return nil, err
 	}
 	for _, n := range notes {
-		a.notify(ctx, ports.Message{To: d.FormatMZPhone(n.phone), Kind: "split_approval", Body: c.Account.Name + " propôs uma nova divisão. Aprova em " + a.PublicURL + "/aprovar#" + n.token})
+		a.notifyMember(ctx, &n.member, ports.Message{Kind: "split_approval", Body: c.Account.Name + " propôs uma nova divisão. Revê e aprova para ela entrar em vigor.", Link: a.PublicURL + "/aprovar#" + n.token})
 	}
 	return a.Group(ctx, c)
 }

@@ -33,6 +33,9 @@ type Deps struct {
 	Location      *time.Location
 	AllowSimulate bool
 	Sandbox       bool
+	// ComingSoon is what can't be used yet: payments and payouts by e-Mola, and by
+	// card and bank (Card covers both).
+	ComingSoon d.ChannelSet
 }
 
 type App struct {
@@ -95,6 +98,20 @@ func (a *App) audit(ctx context.Context, s ports.Store, accountID, scope, text s
 func (a *App) notify(ctx context.Context, m ports.Message) {
 	if err := a.Notifier.Send(ctx, m); err != nil {
 		a.Log.Warn("notify failed", "kind", m.Kind, "err", err)
+	}
+}
+
+// notifyMember reaches a member by phone and at their account's email, when they
+// have an account: a phone number alone reaches nobody until SMS is connected.
+func (a *App) notifyMember(ctx context.Context, m *d.Member, msg ports.Message) {
+	msg.To = d.FormatMZPhone(m.WalletNumber)
+	a.notify(ctx, msg)
+	if m.UserID == nil {
+		return
+	}
+	if u, err := a.Store.Users().ByID(ctx, *m.UserID); err == nil && u.Email != "" {
+		msg.To = u.Email
+		a.notify(ctx, msg)
 	}
 }
 

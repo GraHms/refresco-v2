@@ -35,7 +35,7 @@ export default function BackofficeLayout() {
   if (!me || !me.account) return null;
   const handle = me.account.handle;
   const link = `${location.origin}/${handle}`;
-  const copyLink = () => { copy(link); toast('Link copiado: refres.co/' + handle); };
+  const copyLink = () => { copy(link); toast('Link copiado: pagarefresco.com/' + handle); };
   const out = async () => { await logout(); nav('/entrar', { replace: true }); };
 
   return (
@@ -69,7 +69,7 @@ export default function BackofficeLayout() {
                 <div className="mono" style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, letterSpacing: '.08em', textTransform: 'uppercase', color: '#A39C92' }}>
                   <span style={{ width: 7, height: 7, borderRadius: '50%', background: me.account_status === 'suspended' ? '#FF6A1A' : '#5BD08A' }} />{me.account_status === 'suspended' ? 'Página suspensa' : 'Página ativa'}
                 </div>
-                <div className="mono" style={{ fontSize: 13, wordBreak: 'break-all' }}>refres.co/{handle}</div>
+                <div className="mono" style={{ fontSize: 13, wordBreak: 'break-all' }}>pagarefresco.com/{handle}</div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   <button onClick={copyLink} style={{ height: 36, borderRadius: 10, border: '1px solid #3A3531', background: 'transparent', color: '#F6EFE6', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><Copy size={14} />Copiar</button>
                   <a href={'/' + handle} target="_blank" rel="noopener" style={{ height: 36, borderRadius: 10, background: '#D14400', color: '#fff', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>Abrir<ArrowUpRight size={14} /></a>

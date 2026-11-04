@@ -225,7 +225,7 @@ func (p *doc) order(o ports.PaymentOrder, hasLogo bool) {
 	p.section("Beneficiário")
 	p.kv("Membro", strings.TrimSpace(o.MemberName+" · "+o.MemberRole), false)
 	p.kv("Contacto", d.FormatMZPhone(o.MemberPhone), false)
-	p.kv("Conta refres.co", o.AccountName+" (refres.co/"+o.AccountHandle+")", false)
+	p.kv("Conta refres.co", o.AccountName+" (pagarefresco.com/"+o.AccountHandle+")", false)
 	p.kv("Estado da conta", accStatus[o.AccountStatus], false)
 
 	p.section("Histórico")

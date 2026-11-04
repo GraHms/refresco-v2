@@ -2,6 +2,7 @@ package app_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
@@ -93,7 +94,7 @@ func TestDonationLifecycle(t *testing.T) {
 	if _, err := a.CreateSupport(ctx, "bandateste", app.CreateSupportInput{Amount: 300 * d.MT, Channel: d.ChannelEmola, Phone: "845123398"}); err == nil {
 		t.Fatal("wallet mismatch accepted")
 	}
-	if _, err := a.CreateSupport(ctx, "bandateste", app.CreateSupportInput{Amount: 20 * d.MT, Channel: d.ChannelMpesa, Phone: "845123398"}); err == nil {
+	if _, err := a.CreateSupport(ctx, "bandateste", app.CreateSupportInput{Amount: 4 * d.MT, Channel: d.ChannelMpesa, Phone: "845123398"}); err == nil {
 		t.Fatal("amount below minimum accepted")
 	}
 	s, err := a.CreateSupport(ctx, "bandateste", app.CreateSupportInput{Amount: 1000 * d.MT, Channel: d.ChannelMpesa, Phone: "845123398", IdemKey: "idem-key-0001"})
@@ -213,5 +214,45 @@ func TestDonationLifecycle(t *testing.T) {
 	ws, _ := a.Store.Withdrawals().List(ctx, ports.WithdrawalFilter{AccountID: cr.Account.ID, Statuses: []d.WithdrawalStatus{d.WithdrawalPaid}})
 	if len(ws) != 1 || ws[0].TransferRef != "MP-PAY-1" {
 		t.Fatalf("paid withdrawal not recorded: %+v", ws)
+	}
+}
+
+// A new creator has no supports yet: the dashboard reads recent.length, so a null
+// list here leaves them with a white page.
+func TestNewAccountOverviewHasEmptyLists(t *testing.T) {
+	a, _ := setup(t)
+	ctx := context.Background()
+	sess, err := a.Register(ctx, app.RegisterInput{Code: "TEST-1", Name: "Nova", Handle: "novaconta", Email: "n@x.co", Phone: "845550001", Password: "password-123", Terms: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	c, err := a.CreatorContext(ctx, sess.User)
+	if err != nil {
+		t.Fatal(err)
+	}
+	o, err := a.Overview(ctx, c, "30d")
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, err := json.Marshal(o)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(b), `"recent":null`) || strings.Contains(string(b), `"split":null`) || strings.Contains(string(b), `"series":null`) {
+		t.Fatalf("null list: %s", b)
+	}
+}
+
+func TestNewAccountMinimumIsFiveMT(t *testing.T) {
+	a, _ := setup(t)
+	ctx := context.Background()
+	if _, err := a.Register(ctx, app.RegisterInput{Code: "TEST-1", Name: "Nova", Handle: "novaconta", Email: "n@x.co", Phone: "845550001", Password: "password-123", Terms: true}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := a.CreateSupport(ctx, "novaconta", app.CreateSupportInput{Amount: 5 * d.MT, Channel: d.ChannelMpesa, Phone: "845551111"}); err != nil {
+		t.Fatalf("5 MT refused: %v", err)
+	}
+	if _, err := a.CreateSupport(ctx, "novaconta", app.CreateSupportInput{Amount: 4 * d.MT, Channel: d.ChannelMpesa, Phone: "845551112"}); err == nil {
+		t.Fatal("4 MT accepted")
 	}
 }

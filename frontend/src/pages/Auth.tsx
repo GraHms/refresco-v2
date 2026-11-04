@@ -63,7 +63,7 @@ function Aside() {
       <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 22, maxWidth: 440 }}>
         <div className="mono" style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, letterSpacing: '.1em', textTransform: 'uppercase', color: '#A89C8F' }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: '#FF6A1A' }} />Acesso por convite</div>
         <h1 className="display" style={{ margin: 0, fontWeight: 800, fontSize: 'clamp(36px,3.6vw,52px)', lineHeight: 0.98, letterSpacing: '-0.045em' }}>Os teus fãs pagam-te um refresco.</h1>
-        <p style={{ margin: 0, fontSize: 17, lineHeight: 1.55, color: '#CFC6B8' }}>Apoios por M-Pesa, e-Mola e cartão, num só link. Por agora a refres.co está aberta apenas a criadores convidados.</p>
+        <p style={{ margin: 0, fontSize: 17, lineHeight: 1.55, color: '#CFC6B8' }}>Apoios por M-Pesa num só link, com e-Mola e cartão em breve. Por agora a refres.co está aberta apenas a criadores convidados.</p>
       </div>
       <div style={{ position: 'relative', zIndex: 1, maxWidth: 360, padding: 18, borderRadius: 20, background: '#F6EFE6', color: '#1A1410', display: 'flex', flexDirection: 'column', gap: 10, boxShadow: '0 30px 60px -20px rgba(0,0,0,.5)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span style={{ fontWeight: 600, fontSize: 14 }}>Tu Pra Tu Podcast</span><span className="mono" style={{ fontSize: 11.5, color: '#6E6861' }}>há 4 min</span></div>
@@ -197,7 +197,7 @@ function Register({ pw, onCreated }: { pw: Pw; onCreated: (h: string) => void })
               placeholder="Ex.: Tu Pra Tu Podcast" style={{ ...field, border: `1.5px solid ${bd(tried && name.trim().length < 2)}` }} /></label>
           <label style={{ display: 'flex', flexDirection: 'column', gap: 7 }}><span style={{ fontSize: 13, fontWeight: 600 }}>O teu link</span>
             <span style={{ display: 'flex', alignItems: 'center', height: 50, borderRadius: 13, border: `1.5px solid ${bd(hs.color === RED || (tried && !handle), hs.color === '#17803D')}`, background: '#fff', overflow: 'hidden' }}>
-              <span className="mono" style={{ height: '100%', display: 'flex', alignItems: 'center', padding: '0 12px', background: '#FBF7F1', borderRight: '1px solid #EFE7DC', fontSize: 14, color: '#57524B' }}>refres.co/</span>
+              <span className="mono" style={{ height: '100%', display: 'flex', alignItems: 'center', padding: '0 12px', background: '#FBF7F1', borderRight: '1px solid #EFE7DC', fontSize: 14, color: '#57524B' }}>pagarefresco.com/</span>
               <input value={handle} onChange={e => { setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9.]/g, '').slice(0, 24)); setTouched(true); }} placeholder="o-teu-nome" className="mono" style={{ flex: 1, minWidth: 0, height: '100%', border: 0, outline: 'none', padding: '0 12px', fontSize: 14, background: 'transparent' }} />
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: hs.color }}>{hs.icon === 'ok' ? <CircleCheck size={13} /> : hs.icon === 'alert' ? <CircleAlert size={13} /> : <Info size={13} />}{hs.text}</span>
@@ -247,7 +247,7 @@ function Created({ handle }: { handle: string }) {
       <span style={{ width: 72, height: 72, borderRadius: 24, background: '#D14400', color: '#fff', display: 'grid', placeItems: 'center' }}><PartyPopper size={32} /></span>
       <div><h2 style={{ ...h2, fontSize: 30 }}>Conta criada!</h2><p style={{ margin: '10px 0 0', color: '#57524B' }}>A tua página já existe. Antes do primeiro levantamento, a equipa refres.co vai verificar a tua conta.</p></div>
       <div style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderRadius: 16, background: '#fff', border: '1px solid #E4DDD1' }}>
-        <LinkIcon size={16} color="#6E6861" /><span className="mono" style={{ flex: 1, textAlign: 'left', fontSize: 14 }}>refres.co/{handle}</span>
+        <LinkIcon size={16} color="#6E6861" /><span className="mono" style={{ flex: 1, textAlign: 'left', fontSize: 14 }}>pagarefresco.com/{handle}</span>
         <span style={{ height: 24, padding: '0 8px', borderRadius: 7, background: '#E3F3E8', color: '#17803D', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center' }}>Ativa</span>
       </div>
       <Link to="/painel/pagina" className="btn btn-primary" style={{ ...primary, width: '100%' }}>Configurar a minha página<ArrowRight size={17} /></Link>
@@ -291,14 +291,14 @@ function Forgot({ pw }: { pw: Pw }) {
       <Link to="/entrar" style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600, fontSize: 14 }}><ArrowLeft size={16} />Voltar a entrar</Link>
       <div style={{ display: 'flex', gap: 6 }}>{[1, 2, 3].map(i => <span key={i} style={{ flex: 1, height: 4, borderRadius: 2, background: i < step || step === 4 ? '#1A1410' : i === step ? '#D14400' : '#E4DDD1', transition: 'background-color .2s' }} />)}</div>
       {step === 1 && <form onSubmit={e => { e.preventDefault(); send(); }} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div><h2 style={h}>Recuperar palavra-passe</h2><p style={{ margin: '8px 0 0', color: '#57524B' }}>Enviamos um código de 6 dígitos para o teu email ou telemóvel.</p></div>
+        <div><h2 style={h}>Recuperar palavra-passe</h2><p style={{ margin: '8px 0 0', color: '#57524B' }}>Enviamos um código de 6 dígitos para o email da tua conta.</p></div>
         <label style={{ display: 'flex', flexDirection: 'column', gap: 7 }}><span style={{ fontSize: 13, fontWeight: 600 }}>Email ou telemóvel</span>
           <input value={id} onChange={e => setId(e.target.value)} autoComplete="username" placeholder="nome@email.com ou 84 123 4567" style={inp(bd(tried && !okId(id)))} /></label>
         {err && <ErrorBox>{err}</ErrorBox>}
         <button type="submit" className="btn btn-primary" style={primary} disabled={busy}>{busy && <Spinner />}Enviar código</button>
       </form>}
       {step === 2 && <form onSubmit={e => { e.preventDefault(); verify(); }} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div><h2 style={h}>Escreve o código</h2><p style={{ margin: '8px 0 0', color: '#57524B' }}>Se a conta existir, enviámos para <b style={{ color: '#1A1410' }}>{masked}</b>.</p></div>
+        <div><h2 style={h}>Escreve o código</h2><p style={{ margin: '8px 0 0', color: '#57524B' }}>Se a conta existir, enviámos {id.includes('@') ? <>para <b style={{ color: '#1A1410' }}>{masked}</b></> : 'para o email da conta'}.</p></div>
         <input type="tel" inputMode="numeric" autoComplete="one-time-code" value={code} onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="000000" aria-label="Código"
           className="mono" style={inp(bd(tried && code.length !== 6), { height: 64, borderRadius: 16, fontSize: 28, letterSpacing: '.5em', textAlign: 'center' })} />
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13.5, color: '#6E6861' }}>

@@ -31,11 +31,13 @@ export function Toggle({ on, onClick, label, disabled }: { on: boolean; onClick:
   return <button type="button" className={'toggle' + (on ? ' on' : '')} onClick={onClick} aria-label={label} aria-pressed={on} disabled={disabled}><i /></button>;
 }
 
-export function Seg<T extends string>({ value, options, onChange, small }: { value: T; options: [T, string][]; onChange: (v: T) => void; small?: boolean }) {
+export function Seg<T extends string>({ value, options, onChange, small, soon = [] }: { value: T; options: [T, string][]; onChange: (v: T) => void; small?: boolean; soon?: T[] }) {
   return (
     <div className="seg" style={small ? { background: '#F0EBE3', borderRadius: 13 } : undefined}>
       {options.map(([k, l]) => (
-        <button key={k} type="button" className={value === k ? 'on' : ''} onClick={() => onChange(k)} style={small ? { height: 32, padding: '0 11px', fontSize: 12.5, borderRadius: 9 } : undefined}>{l}</button>
+        <button key={k} type="button" disabled={soon.includes(k)} className={value === k ? 'on' : ''} onClick={() => onChange(k)} style={{ ...(small ? { height: 32, padding: '0 11px', fontSize: 12.5, borderRadius: 9 } : {}), ...(soon.includes(k) ? { opacity: 0.6, cursor: 'not-allowed', lineHeight: 1.1 } : {}) }}>
+          {l}{soon.includes(k) && <span style={{ display: 'block', fontSize: 10.5, fontWeight: 600, color: '#A83700' }}>Em breve</span>}
+        </button>
       ))}
     </div>
   );

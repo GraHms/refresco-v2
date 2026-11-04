@@ -63,6 +63,18 @@ func run(log *slog.Logger) error {
 			}
 		}
 	}()
+	go func() {
+		t := time.NewTicker(5 * time.Second)
+		defer t.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-t.C:
+				a.ReconcilePayments(ctx)
+			}
+		}
+	}()
 	srv := &http.Server{Addr: cfg.Addr, Handler: engine, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 15 * time.Second,
 		WriteTimeout: 30 * time.Second, IdleTimeout: 120 * time.Second, MaxHeaderBytes: 1 << 16}
 	errc := make(chan error, 1)

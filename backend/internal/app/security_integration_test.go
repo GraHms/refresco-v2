@@ -3,6 +3,8 @@ package app_test
 import (
 	"context"
 	"errors"
+	"fmt"
+	"net/http"
 	"strings"
 	"sync"
 	"testing"
@@ -185,6 +187,175 @@ func TestSecurityControls(t *testing.T) {
 			MinAmount: 50 * d.MT, AllowCustom: true, Channels: d.ChannelSet{Mpesa: true}, Socials: map[string]string{"spotify": "https://evil.example/login"}}
 		if _, err := a.UpdatePage(ctx, cr, p); code(t, err) != "invalid_social" {
 			t.Fatalf("URL accepted as a social handle: %v", err)
+		}
+	})
+}
+
+func TestResetAskedByPhoneReachesTheEmail(t *testing.T) {
+	a, _ := setup(t)
+	box := &capture{}
+	a.Notifier = box
+	ctx := context.Background()
+	if _, err := a.Register(ctx, app.RegisterInput{Code: "TEST-1", Name: "Seg Teste", Handle: "segteste", Email: "s@x.co", Phone: "845550000", Password: "password-123", Terms: true}); err != nil {
+		t.Fatal(err)
+	}
+	if err := a.ForgotPassword(ctx, "845550000"); err != nil {
+		t.Fatal(err)
+	}
+	m := box.last("password_reset_code")
+	if m == nil || m.To != "s@x.co" || len(m.Code) != 6 {
+		t.Fatalf("no phone provider exists, so the code must go to the email: %+v", m)
+	}
+}
+
+// gate is a gateway whose answer the test controls, standing in for M-Pesa's open request.
+type gate struct {
+	state    ports.PaymentState
+	inFlight bool
+	sent     int
+}
+
+func (g *gate) Name() string { return "gate" }
+func (g *gate) Initiate(context.Context, ports.PaymentRequest) (ports.PaymentInit, error) {
+	g.sent++
+	return ports.PaymentInit{ProviderRef: fmt.Sprintf("REF%d", g.sent), NextAction: "wallet_pin", ExpiresAt: time.Now().Add(2 * time.Minute)}, nil
+}
+func (g *gate) Status(context.Context, string) (ports.PaymentState, error) { return g.state, nil }
+func (g *gate) SubmitOTP(context.Context, string, string) (ports.PaymentState, error) {
+	return g.state, nil
+}
+func (g *gate) ParseWebhook(http.Header, []byte) (string, ports.PaymentState, error) {
+	return "", ports.PaymentState{}, errors.New("no webhooks")
+}
+func (g *gate) InFlight(string) bool { return g.inFlight }
+
+func TestRealMoneyPaymentRules(t *testing.T) {
+	a, _ := setup(t)
+	ctx := context.Background()
+	if _, err := a.Register(ctx, app.RegisterInput{Code: "TEST-1", Name: "Seg Teste", Handle: "segteste", Email: "s@x.co", Phone: "845550000", Password: "password-123", Terms: true}); err != nil {
+		t.Fatal(err)
+	}
+	g := &gate{state: ports.PaymentState{Status: d.SupportPending}, inFlight: true}
+	a.Payments = g
+	a.ComingSoon = d.ChannelSet{Emola: true, Card: true}
+	pay := func(channel d.Channel, phone string) (*d.Support, error) {
+		return a.CreateSupport(ctx, "segteste", app.CreateSupportInput{Amount: 10000, Channel: channel, Phone: phone})
+	}
+	amount := func() d.Money {
+		acc, err := a.PublicPage(ctx, "segteste")
+		if err != nil {
+			t.Fatal(err)
+		}
+		c, err := a.Store.Members().ByAccount(ctx, acc.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return c[0].Balance
+	}
+
+	t.Run("e-Mola and card are refused", func(t *testing.T) {
+		if _, err := pay(d.ChannelEmola, "865550000"); code(t, err) != "channel_unavailable" {
+			t.Fatal(err)
+		}
+		if _, err := a.CreateSupport(ctx, "segteste", app.CreateSupportInput{Amount: 10000, Channel: d.ChannelCard, CardBrand: "visa", CardLast4: "4242", CardToken: "tok_1234567890"}); code(t, err) != "channel_unavailable" {
+			t.Fatal(err)
+		}
+	})
+
+	t.Run("a prompt in flight can't be replaced or cancelled", func(t *testing.T) {
+		s, err := pay(d.ChannelMpesa, "845551111")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := a.ResendSupport(ctx, s.ID); code(t, err) != "payment_in_flight" {
+			t.Fatal(err)
+		}
+		if g.sent != 1 {
+			t.Fatalf("a second prompt went out: %d", g.sent)
+		}
+		if err := a.CancelSupport(ctx, s.ID); err != nil {
+			t.Fatal(err)
+		}
+		got, _, err := a.SupportStatus(ctx, s.ID)
+		if err != nil || got.Status != d.SupportPending {
+			t.Fatalf("cancel must leave it pending: %v %+v", err, got)
+		}
+	})
+
+	t.Run("paying after closing the page is credited once", func(t *testing.T) {
+		s, err := pay(d.ChannelMpesa, "845552222")
+		if err != nil {
+			t.Fatal(err)
+		}
+		before := amount()
+		a.ReconcilePayments(ctx)
+		if amount() != before {
+			t.Fatal("credited before M-Pesa answered")
+		}
+		g.state, g.inFlight = ports.PaymentState{Status: d.SupportConfirmed}, false
+		a.ReconcilePayments(ctx)
+		after := amount()
+		if after <= before {
+			t.Fatal("nobody watching, and the payment was not credited")
+		}
+		a.ReconcilePayments(ctx)
+		if amount() != after {
+			t.Fatal("credited twice")
+		}
+		got, _, _ := a.SupportStatus(ctx, s.ID)
+		if got.Status != d.SupportConfirmed {
+			t.Fatalf("%+v", got)
+		}
+	})
+
+	t.Run("an answer after the page gave up still counts", func(t *testing.T) {
+		g.state, g.inFlight = ports.PaymentState{Status: d.SupportExpired}, false
+		s, err := pay(d.ChannelMpesa, "845553333")
+		if err != nil {
+			t.Fatal(err)
+		}
+		a.ReconcilePayments(ctx)
+		got, _, _ := a.SupportStatus(ctx, s.ID)
+		if got.Status != d.SupportExpired {
+			t.Fatalf("%+v", got)
+		}
+		before := amount()
+		g.state = ports.PaymentState{Status: d.SupportConfirmed}
+		a.ReconcilePayments(ctx)
+		if amount() <= before {
+			t.Fatal("late confirmation lost")
+		}
+	})
+
+	t.Run("a failure reason reaches the customer", func(t *testing.T) {
+		g.state = ports.PaymentState{Status: d.SupportFailed, FailReason: "Saldo insuficiente"}
+		s, err := pay(d.ChannelMpesa, "845554444")
+		if err != nil {
+			t.Fatal(err)
+		}
+		got, _, err := a.SupportStatus(ctx, s.ID)
+		if err != nil || got.Status != d.SupportFailed || got.FailReason != "Saldo insuficiente" {
+			t.Fatalf("%v %+v", err, got)
+		}
+	})
+
+	t.Run("payouts by e-Mola and bank are refused", func(t *testing.T) {
+		sess, err := a.Login(ctx, "s@x.co", "password-123")
+		if err != nil {
+			t.Fatal(err)
+		}
+		c, err := a.CreatorContext(ctx, sess.User)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := a.AddPayoutAccount(ctx, c, app.PayoutAccountInput{Kind: d.PayoutEmola, Number: "865550000", Password: "password-123"}); code(t, err) != "payout_coming_soon" {
+			t.Fatal(err)
+		}
+		if _, err := a.AddPayoutAccount(ctx, c, app.PayoutAccountInput{Kind: d.PayoutNIB, Number: "000800000412345678101", Bank: "BCI", Holder: "Banda", Password: "password-123"}); code(t, err) != "payout_coming_soon" {
+			t.Fatal(err)
+		}
+		if _, err := a.InviteMember(ctx, c, app.InviteMemberInput{Name: "Membro", Wallet: d.ChannelEmola, Phone: "865550000"}); code(t, err) != "wallet_coming_soon" {
+			t.Fatal(err)
 		}
 	})
 }

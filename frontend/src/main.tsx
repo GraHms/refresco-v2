@@ -7,6 +7,7 @@ import '@fontsource-variable/geist-mono';
 import './styles.css';
 import { SessionProvider, useSession } from './lib/session';
 import { ToastProvider } from './components/ui';
+import ErrorBoundary from './components/ErrorBoundary';
 import SupportPage from './pages/SupportPage';
 import Auth, { homeFor } from './pages/Auth';
 import { Landing, SplitApproval } from './pages/Misc';
@@ -37,6 +38,7 @@ function Boot({ children }: { children: JSX.Element }) {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
+    <ErrorBoundary>
     <BrowserRouter>
       <SessionProvider>
         <ToastProvider>
@@ -73,5 +75,6 @@ createRoot(document.getElementById('root')!).render(
         </ToastProvider>
       </SessionProvider>
     </BrowserRouter>
+    </ErrorBoundary>
   </StrictMode>,
 );

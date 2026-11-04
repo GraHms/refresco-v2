@@ -103,7 +103,7 @@ func (a *Account) Negotiated(now time.Time) bool { return a.EffectiveFee(now) !=
 
 const (
 	MaxPresetAmount = 1_000_000 * MT
-	MinCustomFloor  = 10 * MT
+	MinCustomFloor  = 5 * MT
 )
 
 // ValidatePage checks the creator-editable settings.
@@ -126,14 +126,14 @@ func (a *Account) ValidatePage() error {
 	}
 	for _, v := range a.Amounts {
 		if v < MinCustomFloor || v > MaxPresetAmount || v%MT != 0 {
-			return Invalid("invalid_amounts", "Os valores sugeridos devem estar entre 10 e 1.000.000 MT.")
+			return Invalid("invalid_amounts", "Os valores sugeridos devem estar entre 5 e 1.000.000 MT.")
 		}
 	}
 	if a.DefaultIdx < 0 || a.DefaultIdx > 3 {
 		return Invalid("invalid_default", "Valor sugerido inválido.")
 	}
 	if a.MinAmount < MinCustomFloor || a.MinAmount > MaxPresetAmount || a.MinAmount%MT != 0 {
-		return Invalid("invalid_min", "O mínimo deve estar entre 10 e 1.000.000 MT.")
+		return Invalid("invalid_min", "O mínimo deve estar entre 5 e 1.000.000 MT.")
 	}
 	if !a.Channels.Any() {
 		return Invalid("no_channel", "Ativa pelo menos uma forma de pagamento.")

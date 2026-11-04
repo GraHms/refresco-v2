@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Check, CircleAlert, CircleCheck, Hourglass, Info, PauseCircle, ShieldCheck, UserMinus, UserPlus } from 'lucide-react';
+import { useSession } from '../../lib/session';
 import { api, ApiError, MemberView } from '../../lib/api';
 import { CH, digits, fmt, fmtPhone, ini, longDate, pct as fmtPct, SEG, walletOf } from '../../lib/format';
 import { Modal, ModalHead, Seg, useToast } from '../../components/ui';
@@ -165,13 +166,15 @@ export default function Group() {
 }
 
 function InviteModal({ onClose, onDone }: { onClose: () => void; onDone: (m: MemberView) => void }) {
+  const { me } = useSession();
+  const emolaSoon = !!me?.coming_soon?.includes('emola');
   const [name, setName] = useState(''); const [role, setRole] = useState(''); const [ch, setCh] = useState<'mpesa' | 'emola'>('mpesa'); const [phone, setPhone] = useState('');
   const [err, setErr] = useState(''); const [busy, setBusy] = useState(false);
   const op = walletOf(phone);
   const valid = name.trim().length > 1 && phone.length === 9 && op === ch;
   const hint = phone.length < 2 ? [`Os levantamentos deste membro vão para este número ${CH[ch].name}.`, '#6E6861', 'info']
     : !op || op === 'tmcel' ? ['Número inválido. Deve começar por 84, 85, 86 ou 87.', '#A83700', 'alert']
-      : op !== ch ? [op === 'mpesa' ? 'Este número é Vodacom: escolhe M-Pesa.' : 'Este número é Movitel: escolhe e-Mola.', '#A83700', 'alert']
+      : op !== ch ? [op === 'mpesa' ? 'Este número é Vodacom: escolhe M-Pesa.' : emolaSoon ? 'O e-Mola chega em breve. Por agora usa um número M-Pesa.' : 'Este número é Movitel: escolhe e-Mola.', '#A83700', 'alert']
         : [op === 'mpesa' ? 'Número Vodacom · recebe por M-Pesa' : 'Número Movitel · recebe por e-Mola', '#17803D', 'ok'];
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -186,7 +189,7 @@ function InviteModal({ onClose, onDone }: { onClose: () => void; onDone: (m: Mem
         <ModalHead title="Convidar membro" sub="Enviamos um SMS com o convite. A pessoa recebe a sua parte no saldo e pede os levantamentos." onClose={onClose} />
         <label className="field"><span>Nome</span><input className="input" value={name} onChange={e => setName(e.target.value.slice(0, 40))} placeholder="Ex.: Tânia Bila" /></label>
         <label className="field"><span>Função no grupo</span><input className="input" value={role} onChange={e => setRole(e.target.value.slice(0, 40))} placeholder="Ex.: Redes sociais" /></label>
-        <div className="field"><span>Carteira</span><Seg value={ch} onChange={setCh} options={[['mpesa', 'M-Pesa'], ['emola', 'e-Mola']]} /></div>
+        <div className="field"><span>Carteira</span><Seg value={ch} onChange={setCh} options={[['mpesa', 'M-Pesa'], ['emola', 'e-Mola']]} soon={emolaSoon ? ['emola'] : []} /></div>
         <label className="field"><span>Número {CH[ch].name}</span>
           <span className="affix" style={{ height: 48 }}><span className="pre">+258</span><input type="tel" className="mono" style={{ fontSize: 15 }} value={fmtPhone(phone)} onChange={e => setPhone(digits(e.target.value, 9))} placeholder={ch === 'mpesa' ? '84 123 4567' : '86 123 4567'} /></span>
           <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: hint[1] }}>{hint[2] === 'ok' ? <CircleCheck size={14} /> : hint[2] === 'alert' ? <CircleAlert size={14} /> : <Info size={14} />}{hint[0]}</span>

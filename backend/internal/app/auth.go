@@ -268,7 +268,7 @@ func (a *App) Register(ctx context.Context, in RegisterInput) (*Session, error) 
 			ID: newID(), OwnerID: u.ID, Handle: handle, Name: name, Category: d.Categories[0],
 			Thanks:  "Kanimambo! O teu apoio faz toda a diferença.",
 			Amounts: []d.Money{100 * d.MT, 300 * d.MT, 500 * d.MT, 1000 * d.MT}, DefaultIdx: 1,
-			AllowCustom: true, MinAmount: 50 * d.MT, Socials: map[string]string{},
+			AllowCustom: true, MinAmount: d.MinCustomFloor, Socials: map[string]string{},
 			Channels: d.ChannelSet{Mpesa: true, Emola: true, Card: true},
 			FeeBPS:   inv.FeeBPS, Status: d.AccountPending, StatusNote: "Falta validar o BI antes do primeiro levantamento.",
 			InviteCode: inv.Code, AutoSplit: true, CreatedAt: now,
@@ -345,11 +345,13 @@ func (a *App) ForgotPassword(ctx context.Context, identifier string) error {
 	if err := a.Store.Resets().Create(ctx, r); err != nil {
 		return err
 	}
-	to := u.Email
+	msg := ports.Message{To: u.Email, Kind: "password_reset_code", Body: "O teu código refres.co: " + code + ". Expira em 10 minutos.", Code: code}
 	if !strings.Contains(identifier, "@") {
-		to = d.FormatMZPhone(u.Phone)
+		phone := msg
+		phone.To = d.FormatMZPhone(u.Phone)
+		a.notify(ctx, phone)
 	}
-	a.notify(ctx, ports.Message{To: to, Kind: "password_reset_code", Body: "O teu código refres.co: " + code + ". Expira em 10 minutos."})
+	a.notify(ctx, msg)
 	return nil
 }
 

@@ -17,6 +17,7 @@ const MaxSupportAmount = 100_000 * d.MT
 
 const (
 	pushWindow          = 15 * time.Minute
+	reconcileWindow     = 30 * time.Minute
 	maxPushesPerPhone   = 5
 	maxPushesPerSupport = 3
 )
@@ -60,7 +61,7 @@ func (a *App) CreateSupport(ctx context.Context, handle string, in CreateSupport
 	if err != nil {
 		return nil, err
 	}
-	if !in.Channel.Valid() || !acc.Channels.Has(in.Channel) {
+	if !in.Channel.Valid() || !acc.Channels.Has(in.Channel) || a.ComingSoon.Has(in.Channel) {
 		return nil, d.Invalid("channel_unavailable", "Esta forma de pagamento não está disponível.")
 	}
 	preset := false
@@ -206,6 +207,9 @@ func (a *App) ResendSupport(ctx context.Context, id string) (*d.Support, error) 
 	if !s.Channel.IsWallet() || (s.Status != d.SupportPending && s.Status != d.SupportExpired) {
 		return nil, d.ErrStaleState
 	}
+	if a.inFlight(s.ProviderRef) {
+		return nil, d.Invalid("payment_in_flight", "O pedido anterior ainda está ativo no teu telemóvel. Confirma-o com o PIN ou espera que expire.")
+	}
 	if s.Pushes >= maxPushesPerSupport {
 		return nil, errPushLimit
 	}
@@ -240,7 +244,17 @@ func (a *App) ResendSupport(ctx context.Context, id string) (*d.Support, error) 
 	return out, err
 }
 
+func (a *App) inFlight(ref string) bool {
+	g, ok := a.Payments.(ports.PaymentInFlight)
+	return ok && ref != "" && g.InFlight(ref)
+}
+
+// CancelSupport can't withdraw a prompt already on the customer's phone. While
+// they could still pay it, the support stays pending and takes M-Pesa's answer.
 func (a *App) CancelSupport(ctx context.Context, id string) error {
+	if s, err := a.Store.Supports().ByID(ctx, id); err == nil && s.Status == d.SupportPending && a.inFlight(s.ProviderRef) {
+		return nil
+	}
 	_, err := a.apply(ctx, id, ports.PaymentState{Status: d.SupportFailed, FailReason: "Cancelado pelo apoiante"})
 	return err
 }
@@ -274,6 +288,26 @@ func (a *App) PaymentWebhook(ctx context.Context, h http.Header, body []byte) er
 	}
 	_, err = a.apply(ctx, s.ID, st)
 	return err
+}
+
+// ReconcilePayments settles payments nobody is watching: the status only used to
+// be read while the customer's page was open, and they can close it after the PIN.
+func (a *App) ReconcilePayments(ctx context.Context) {
+	rows, err := a.Store.Supports().Unsettled(ctx, a.now().Add(-reconcileWindow), 100)
+	if err != nil {
+		a.Log.Warn("payment reconcile failed", "err", err)
+		return
+	}
+	for _, s := range rows {
+		st, err := a.Payments.Status(ctx, s.ProviderRef)
+		if err != nil {
+			a.Log.Warn("payment status failed", "support", s.ID, "err", err)
+			continue
+		}
+		if _, err := a.apply(ctx, s.ID, st); err != nil {
+			a.Log.Warn("payment apply failed", "support", s.ID, "err", err)
+		}
+	}
 }
 
 // apply moves a pending support to its final state exactly once.

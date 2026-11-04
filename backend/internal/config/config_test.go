@@ -54,3 +54,23 @@ func TestDevSecretsAreRandom(t *testing.T) {
 		t.Fatal("development secrets must be random per process")
 	}
 }
+
+func TestMpesaNeedsItsKeysAndKeepsTheRestComingSoon(t *testing.T) {
+	setEnv(t, map[string]string{"APP_ENV": "production", "JWT_SECRET": strong, "APP_SECRET": strong, "COOKIE_SECURE": "true", "PAYMENTS_PROVIDER": "mpesa"})
+	if _, err := Load(); err == nil || !strings.Contains(err.Error(), "MPESA_API_KEY") {
+		t.Fatalf("started without keys: %v", err)
+	}
+	t.Setenv("MPESA_API_KEY", "k")
+	t.Setenv("MPESA_PUBLIC_KEY", "p")
+	t.Setenv("MPESA_SERVICE_PROVIDER_CODE", "171717")
+	c, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.Sandbox || c.AllowSimulate || c.MpesaBaseURL != "https://api.vm.co.mz" || c.MpesaC2BPort != "18352" {
+		t.Fatalf("%+v", c)
+	}
+	if !c.ComingSoon.Emola || !c.ComingSoon.Card || c.ComingSoon.Mpesa {
+		t.Fatalf("coming soon: %+v", c.ComingSoon)
+	}
+}

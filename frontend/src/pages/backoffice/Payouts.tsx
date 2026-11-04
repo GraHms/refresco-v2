@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ArrowDownToLine, CircleAlert, CircleCheck, Clock3, Landmark, Plus, Smartphone, Trash2, Wallet } from 'lucide-react';
+import { useSession } from '../../lib/session';
 import { api, ApiError, WithdrawalView } from '../../lib/api';
 import { digits, fmt, fmtPhone, ini, MOL, monthOf, mt, mtN, SEG, shortDateTime, walletOf, WD_ST } from '../../lib/format';
 import { Badge, Modal, ModalHead, Seg, useToast } from '../../components/ui';
@@ -163,6 +164,8 @@ function WithdrawModal({ w, onClose, onDone }: { w: WalletV; onClose: () => void
 }
 
 function AddAccount({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
+  const { me } = useSession();
+  const soon = (['emola', 'nib'] as const).filter(k => me?.coming_soon?.includes(k === 'nib' ? 'card' : k));
   const [kind, setKind] = useState<'mpesa' | 'emola' | 'nib'>('mpesa');
   const [num, setNum] = useState(''); const [bank, setBank] = useState(BANKS[0]); const [holder, setHolder] = useState(''); const [pw, setPw] = useState(''); const [main, setMain] = useState(false);
   const [err, setErr] = useState(''); const [busy, setBusy] = useState(false);
@@ -179,7 +182,7 @@ function AddAccount({ onClose, onDone }: { onClose: () => void; onDone: () => vo
     <Modal onClose={onClose} label="Adicionar conta">
       <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <ModalHead title="Adicionar conta" sub="Para onde podes pedir levantamentos." onClose={onClose} />
-        <Seg value={kind} onChange={k => { setKind(k); setNum(''); setErr(''); }} options={[['mpesa', 'M-Pesa'], ['emola', 'e-Mola'], ['nib', 'Conta bancária']]} />
+        <Seg value={kind} onChange={k => { setKind(k); setNum(''); setErr(''); }} options={[['mpesa', 'M-Pesa'], ['emola', 'e-Mola'], ['nib', 'Conta bancária']]} soon={soon} />
         {kind === 'nib' ? <>
           <label className="field"><span>Banco</span><select className="input" value={bank} onChange={e => setBank(e.target.value)}>{BANKS.map(b => <option key={b}>{b}</option>)}</select></label>
           <label className="field"><span>NIB</span><input className="input mono" inputMode="numeric" value={num.replace(/(\d{4})(?=\d)/g, '$1 ')} onChange={e => setNum(e.target.value.replace(/\D/g, '').slice(0, 21))} placeholder="0008 0000 0412 3456 7810 1" /></label>

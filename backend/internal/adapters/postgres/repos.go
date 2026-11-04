@@ -431,6 +431,22 @@ func (r supportRepo) ExpireStale(ctx context.Context, before time.Time) (int64, 
 	return res.RowsAffected, res.Error
 }
 
+func (r supportRepo) Unsettled(ctx context.Context, since time.Time, limit int) ([]d.Support, error) {
+	var rows []supportModel
+	err := r.db.WithContext(ctx).
+		Where("status IN ? AND provider_ref IS NOT NULL AND provider_ref <> '' AND channel IN ? AND created_at >= ?",
+			[]string{string(d.SupportPending), string(d.SupportExpired)}, []string{string(d.ChannelMpesa), string(d.ChannelEmola)}, since).
+		Order("created_at").Limit(limit).Find(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+	out := make([]d.Support, 0, len(rows))
+	for i := range rows {
+		out = append(out, toSupport(&rows[i]))
+	}
+	return out, nil
+}
+
 type withdrawalRepo struct{ db *gorm.DB }
 
 func toWithdrawal(m *withdrawalModel) d.Withdrawal {

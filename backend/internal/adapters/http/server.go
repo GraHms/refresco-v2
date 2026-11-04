@@ -158,18 +158,19 @@ func (s *Server) clearCookie(c *gin.Context) {
 }
 
 type meView struct {
-	ID      string          `json:"id"`
-	Name    string          `json:"name"`
-	Email   string          `json:"email"`
-	Role    d.Role          `json:"role"`
-	Account *pageView       `json:"account,omitempty"`
-	Member  *app.MemberView `json:"member,omitempty"`
-	Status  d.AccountStatus `json:"account_status,omitempty"`
-	Sandbox bool            `json:"sandbox"`
+	ID         string          `json:"id"`
+	Name       string          `json:"name"`
+	Email      string          `json:"email"`
+	Role       d.Role          `json:"role"`
+	Account    *pageView       `json:"account,omitempty"`
+	Member     *app.MemberView `json:"member,omitempty"`
+	Status     d.AccountStatus `json:"account_status,omitempty"`
+	Sandbox    bool            `json:"sandbox"`
+	ComingSoon []d.Channel     `json:"coming_soon"`
 }
 
 func (s *Server) meOf(c *gin.Context, u *d.User) meView {
-	v := meView{ID: u.ID, Name: u.Name, Email: u.Email, Role: u.Role, Sandbox: s.app.Sandbox}
+	v := meView{ID: u.ID, Name: u.Name, Email: u.Email, Role: u.Role, Sandbox: s.app.Sandbox, ComingSoon: s.comingSoon()}
 	if u.Role == d.RoleCreator {
 		if cr, err := s.app.CreatorContext(c.Request.Context(), u); err == nil {
 			p := toPage(cr.Account)
@@ -336,6 +337,17 @@ type pageView struct {
 	MinAmount   d.Money           `json:"min_amount"`
 	Socials     map[string]string `json:"socials"`
 	Channels    d.ChannelSet      `json:"channels"`
+	ComingSoon  []d.Channel       `json:"coming_soon,omitempty"`
+}
+
+func (s *Server) comingSoon() []d.Channel {
+	out := []d.Channel{}
+	for _, c := range []d.Channel{d.ChannelMpesa, d.ChannelEmola, d.ChannelCard} {
+		if s.app.ComingSoon.Has(c) {
+			out = append(out, c)
+		}
+	}
+	return out
 }
 
 func toPage(a *d.Account) pageView {
@@ -351,6 +363,9 @@ func (s *Server) publicPage(c *gin.Context) {
 	}
 	p := toPage(a)
 	p.ID, p.Sandbox = "", s.app.Sandbox
+	p.ComingSoon = s.comingSoon()
+	soon := s.app.ComingSoon
+	p.Channels = d.ChannelSet{Mpesa: p.Channels.Mpesa && !soon.Mpesa, Emola: p.Channels.Emola && !soon.Emola, Card: p.Channels.Card && !soon.Card}
 	c.Header("Cache-Control", "public, max-age=30")
 	c.JSON(http.StatusOK, p)
 }

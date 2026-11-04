@@ -79,6 +79,7 @@ function SupportCard({ page }: { page: Page }) {
   const def = presets[page.default_idx] ?? presets[0];
   const min = page.min_amount / 100;
   const methods = (['mpesa', 'emola', 'card'] as Channel[]).filter(c => page.channels[c]);
+  const soon = (page.coming_soon || []) as Channel[];
   const cardRef = useRef<HTMLElement>(null);
 
   const [phase, setPhase] = useState<Phase>('form');
@@ -108,9 +109,9 @@ function SupportCard({ page }: { page: Page }) {
     let hint = `Vais receber um pedido ${CHN[ch]} para confirmar com o PIN.`, color = '#6E6861', icon: 'info' | 'alert' | 'ok' = 'info', valid = false, canSwitch = false;
     if (phone.length >= 2) {
       const opName = op === 'mpesa' ? 'Número Vodacom' : 'Número Movitel';
-      if (op === 'tmcel') { hint = 'A Tmcel ainda não é suportada. Paga com cartão.'; color = RED; icon = 'alert'; }
+      if (op === 'tmcel') { hint = page.channels.card ? 'A Tmcel ainda não é suportada. Paga com cartão.' : 'A Tmcel ainda não é suportada. Usa um número M-Pesa (84 ou 85).'; color = RED; icon = 'alert'; }
       else if (!op) { hint = 'Número inválido. Deve começar por 84, 85, 86 ou 87.'; color = RED; icon = 'alert'; }
-      else if (op !== ch) { hint = op === 'mpesa' ? 'Este número é Vodacom.' : 'Este número é Movitel.'; color = RED; icon = 'alert'; canSwitch = page.channels[op]; }
+      else if (op !== ch) { hint = op === 'mpesa' ? 'Este número é Vodacom.' : page.channels.emola ? 'Este número é Movitel.' : 'O e-Mola chega em breve. Por agora usa um número M-Pesa (84 ou 85).'; color = RED; icon = 'alert'; canSwitch = page.channels[op]; }
       else if (phone.length < 9) { const left = 9 - phone.length; hint = `${opName} · ${left === 1 ? 'falta 1 dígito' : `faltam ${left} dígitos`}`; if (tried) { color = RED; icon = 'alert'; } }
       else { valid = true; hint = `${opName} · vais receber o pedido ${CHN[op]}`; color = '#17803D'; icon = 'ok'; }
     } else if (tried) { hint = `Escreve o teu número ${CHN[ch]}.`; color = RED; icon = 'alert'; }
@@ -229,7 +230,7 @@ function SupportCard({ page }: { page: Page }) {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingTop: 4, borderTop: '1px dashed #E4DDD1' }}>
             <span style={{ fontSize: 13, fontWeight: 600, paddingTop: 12 }}>Pagar com</span>
-            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${methods.length},minmax(0,1fr))`, gap: 8 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${methods.length + soon.length},minmax(0,1fr))`, gap: 8 }}>
               {methods.map(k => {
                 const on = method === k;
                 const [label, letter, bb, bf] = ({ mpesa: ['M-Pesa', 'M', '#D14400', '#fff'], emola: ['e-Mola', 'e', '#1A1410', '#fff'], card: ['Cartão', '', '#ECE6DB', '#1A1410'] } as const)[k];
@@ -239,6 +240,16 @@ function SupportCard({ page }: { page: Page }) {
                     <span className="display" style={{ width: 30, height: 30, borderRadius: 9, background: bb, color: bf, display: 'grid', placeItems: 'center', fontWeight: 900, fontSize: 13 }}>{letter}{k === 'card' && <CreditCard size={15} />}</span>
                     <span style={{ fontSize: 13, fontWeight: 600 }}>{label}</span>
                   </button>
+                );
+              })}
+              {soon.map(k => {
+                const [label, letter, bb, bf] = ({ mpesa: ['M-Pesa', 'M', '#D14400', '#fff'], emola: ['e-Mola', 'e', '#1A1410', '#fff'], card: ['Cartão', '', '#ECE6DB', '#1A1410'] } as const)[k];
+                return (
+                  <div key={k} aria-disabled="true" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, height: 72, borderRadius: 16, border: '1.5px dashed #E4DDD1', background: '#FBF7F1', color: '#6E6861' }}>
+                    <span className="display" style={{ width: 24, height: 24, borderRadius: 7, background: bb, color: bf, opacity: 0.45, display: 'grid', placeItems: 'center', fontWeight: 900, fontSize: 11 }}>{letter}{k === 'card' && <CreditCard size={13} />}</span>
+                    <span style={{ fontSize: 12, fontWeight: 600 }}>{label}</span>
+                    <span style={{ fontSize: 10.5, fontWeight: 600, color: '#A83700' }}>Em breve</span>
+                  </div>
                 );
               })}
             </div>

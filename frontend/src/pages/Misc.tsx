@@ -11,9 +11,9 @@ export function Landing() {
   const { me } = useSession();
   useEffect(() => { document.title = 'refres.co · Os teus fãs pagam-te um refresco'; }, []);
   const feats = [
-    [Smartphone, 'M-Pesa, e-Mola e cartão', 'O fã escolhe o valor e confirma com o PIN no telemóvel. Sem apps, sem registo.'],
+    [Smartphone, 'M-Pesa, com e-Mola e cartão em breve', 'O fã escolhe o valor e confirma com o PIN no telemóvel. Sem apps, sem registo.'],
     [Split, 'Divisão automática', 'Grupos e bandas dividem cada apoio na hora, pela percentagem que todos aprovaram.'],
-    [Wallet, 'Levanta quando quiseres', 'O saldo acumula. Pedes o levantamento para o M-Pesa ou para o banco, pago em até 72 h.'],
+    [Wallet, 'Levanta quando quiseres', 'O saldo acumula. Pedes o levantamento para o M-Pesa, pago em até 72 h. O banco chega em breve.'],
   ] as const;
   return (
     <div style={{ minHeight: '100vh', background: '#F6EFE6' }}>
@@ -25,7 +25,7 @@ export function Landing() {
         <section style={{ display: 'flex', flexDirection: 'column', gap: 22, maxWidth: 820 }}>
           <div className="kicker"><i />Acesso por convite · Moçambique</div>
           <h1 className="display" style={{ margin: 0, fontWeight: 800, fontSize: 'clamp(44px,7vw,92px)', lineHeight: 0.95, letterSpacing: '-0.05em' }}>Os teus fãs pagam-te um refresco.</h1>
-          <p style={{ margin: 0, fontSize: 19, lineHeight: 1.55, color: '#57524B', maxWidth: 620 }}>Um link para receberes apoios dos teus fãs em M-Pesa, e-Mola ou cartão. Para criadores, podcasts, bandas e coletivos.</p>
+          <p style={{ margin: 0, fontSize: 19, lineHeight: 1.55, color: '#57524B', maxWidth: 620 }}>Um link para receberes apoios dos teus fãs em M-Pesa, com e-Mola e cartão em breve. Para criadores, podcasts, bandas e coletivos.</p>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <Link className="btn btn-primary" style={{ height: 54, padding: '0 22px', borderRadius: 15, fontSize: 16 }} to="/registar">Tenho um convite<ArrowRight size={17} /></Link>
             <Link className="btn" style={{ height: 54, padding: '0 22px', borderRadius: 15, fontSize: 16 }} to="/tupratu">Ver um exemplo</Link>
