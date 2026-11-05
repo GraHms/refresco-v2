@@ -64,7 +64,7 @@ function Aside() {
       <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 22, maxWidth: 440 }}>
         <div className="mono" style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, letterSpacing: '.1em', textTransform: 'uppercase', color: '#A89C8F' }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: '#FF6A1A' }} />Acesso por convite</div>
         <h1 className="display" style={{ margin: 0, fontWeight: 800, fontSize: 'clamp(36px,3.6vw,52px)', lineHeight: 0.98, letterSpacing: '-0.045em' }}>Os teus fãs pagam-te um refresco.</h1>
-        <p style={{ margin: 0, fontSize: 17, lineHeight: 1.55, color: '#CFC6B8' }}>Apoios por M-Pesa num só link, com e-Mola e cartão em breve. Por agora o Refresco está aberto apenas a criadores convidados.</p>
+        <p style={{ margin: 0, fontSize: 17, lineHeight: 1.55, color: '#CFC6B8' }}>Apoios por M-Pesa, e-Mola e Bim IZI num só link. Por agora o Refresco está aberto apenas a criadores convidados.</p>
       </div>
       <div style={{ position: 'relative', zIndex: 1, maxWidth: 360, padding: 18, borderRadius: 20, background: '#F6EFE6', color: '#1A1410', display: 'flex', flexDirection: 'column', gap: 10, boxShadow: '0 30px 60px -20px rgba(0,0,0,.5)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span style={{ fontWeight: 600, fontSize: 14 }}>Tu Pra Tu Podcast</span><span className="mono" style={{ fontSize: 11.5, color: '#6E6861' }}>há 4 min</span></div>

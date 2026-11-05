@@ -11,11 +11,15 @@ type Channel string
 const (
 	ChannelMpesa Channel = "mpesa"
 	ChannelEmola Channel = "emola"
-	ChannelCard  Channel = "card"
+	// ChannelBim is Millennium bim's IZI, which isn't tied to one operator's numbers.
+	ChannelBim  Channel = "bim"
+	ChannelCard Channel = "card"
 )
 
-func (c Channel) Valid() bool    { return c == ChannelMpesa || c == ChannelEmola || c == ChannelCard }
-func (c Channel) IsWallet() bool { return c == ChannelMpesa || c == ChannelEmola }
+func (c Channel) Valid() bool {
+	return c == ChannelMpesa || c == ChannelEmola || c == ChannelBim || c == ChannelCard
+}
+func (c Channel) IsWallet() bool { return c == ChannelMpesa || c == ChannelEmola || c == ChannelBim }
 
 var nonDigit = regexp.MustCompile(`\D`)
 
@@ -66,7 +70,7 @@ var handleRe = regexp.MustCompile(`^[a-z0-9.]{3,24}$`)
 
 var reservedHandles = map[string]bool{
 	"admin": true, "api": true, "refres": true, "entrar": true, "registar": true, "recuperar": true,
-	"painel": true, "app": true, "static": true, "assets": true, "mpesa": true, "emola": true,
+	"painel": true, "app": true, "static": true, "assets": true, "mpesa": true, "emola": true, "bim": true, "izi": true,
 	"og": true, "suporte": true, "ajuda": true, "termos": true, "privacidade": true, "aprovar": true, "www": true,
 }
 

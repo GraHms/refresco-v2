@@ -66,7 +66,7 @@ func TestMtocaTakesTheWalletsAndWantsAPrivateAddress(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if c.ComingSoon.Emola || !c.ComingSoon.Card || c.ComingSoon.Mpesa || c.Sandbox {
+	if c.ComingSoon.Emola || c.ComingSoon.Bim || !c.ComingSoon.Card || c.ComingSoon.Mpesa || c.Sandbox {
 		t.Fatalf("coming soon %+v, sandbox %v", c.ComingSoon, c.Sandbox)
 	}
 	for raw, want := range map[string]bool{"http://mtoca:8080": true, "http://172.30.5.2:8080": true, "https://api.example.com": true, "http://api.example.com": false, "http://1.1.1.1:8080": false} {

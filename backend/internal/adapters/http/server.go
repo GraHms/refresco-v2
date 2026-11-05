@@ -348,7 +348,7 @@ type pageView struct {
 
 func (s *Server) comingSoon() []d.Channel {
 	out := []d.Channel{}
-	for _, c := range []d.Channel{d.ChannelMpesa, d.ChannelEmola, d.ChannelCard} {
+	for _, c := range []d.Channel{d.ChannelMpesa, d.ChannelEmola, d.ChannelBim, d.ChannelCard} {
 		if s.app.ComingSoon.Has(c) {
 			out = append(out, c)
 		}
@@ -371,7 +371,7 @@ func (s *Server) publicPage(c *gin.Context) {
 	p.ID, p.Sandbox = "", s.app.Sandbox
 	p.ComingSoon = s.comingSoon()
 	soon := s.app.ComingSoon
-	p.Channels = d.ChannelSet{Mpesa: p.Channels.Mpesa && !soon.Mpesa, Emola: p.Channels.Emola && !soon.Emola, Card: p.Channels.Card && !soon.Card}
+	p.Channels = d.ChannelSet{Mpesa: p.Channels.Mpesa && !soon.Mpesa, Emola: p.Channels.Emola && !soon.Emola, Bim: p.Channels.Bim && !soon.Bim, Card: p.Channels.Card && !soon.Card}
 	c.Header("Cache-Control", "public, max-age=30")
 	c.JSON(http.StatusOK, p)
 }
@@ -649,7 +649,7 @@ func (s *Server) exportSupports(c *gin.Context) {
 	w := csv.NewWriter(c.Writer)
 	w.Comma = ';'
 	_ = w.Write([]string{"Data", "Nome", "Mensagem", "Valor (MT)", "Canal", "Contacto", "Estado", "Referência"})
-	chName := map[d.Channel]string{d.ChannelMpesa: "M-Pesa", d.ChannelEmola: "e-Mola", d.ChannelCard: "Cartão"}
+	chName := map[d.Channel]string{d.ChannelMpesa: "M-Pesa", d.ChannelEmola: "e-Mola", d.ChannelBim: "Bim IZI", d.ChannelCard: "Cartão"}
 	stName := map[d.SupportStatus]string{d.SupportConfirmed: "Confirmado", d.SupportPending: "Pendente", d.SupportFailed: "Falhou", d.SupportExpired: "Expirou"}
 	for _, x := range items {
 		if x.Status != d.SupportConfirmed {

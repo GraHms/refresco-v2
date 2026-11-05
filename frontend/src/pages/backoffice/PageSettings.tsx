@@ -37,7 +37,7 @@ export default function PageSettings() {
       : !avail || avail.h !== h ? { text: 'A verificar…', color: '#6E6861', bad: true }
         : !avail.ok ? { text: 'Este link já está ocupado.', color: '#A83700', bad: true } : { text: 'Disponível!', color: '#17803D', bad: false };
   const soon: string[] = me?.coming_soon || [];
-  const noChannel = !(['mpesa', 'emola', 'card'] as const).some(k => pg.channels[k] && !soon.includes(k));
+  const noChannel = !(['mpesa', 'emola', 'bim', 'card'] as const).some(k => pg.channels[k] && !soon.includes(k));
 
   async function save() {
     if (hs.bad) { toast('Corrige o link antes de guardar', true); return; }
@@ -130,12 +130,12 @@ export default function PageSettings() {
 
           <section className="card" style={{ ...section, gap: 6 }}>
             <div style={{ marginBottom: 6 }}>{head('Formas de pagamento', 'Como os fãs podem pagar.')}</div>
-            {(['mpesa', 'emola', 'card'] as const).map(k => (
+            {(['mpesa', 'emola', 'bim', 'card'] as const).filter(k => k !== 'card' || !soon.includes('card')).map(k => (
               <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 0', borderTop: '1px solid #F0EBE3' }}>
                 {k === 'card' ? <span style={{ flex: 'none', width: 40, height: 40, borderRadius: 12, background: '#ECE6DB', color: '#1A1410', display: 'grid', placeItems: 'center' }}><CreditCard size={18} /></span> : <WalletLogo wallet={k} size={40} radius={12} />}
                 <span style={{ flex: 1, minWidth: 0, lineHeight: 1.35 }}>
                   <span style={{ display: 'block', fontWeight: 600 }}>{k === 'card' ? 'Cartão bancário' : CH[k].name}</span>
-                  <span style={{ display: 'block', fontSize: 13, color: '#6E6861' }}>{k === 'mpesa' ? 'Fãs Vodacom confirmam com o PIN M-Pesa' : k === 'emola' ? 'Fãs Movitel confirmam com o PIN e-Mola' : 'Visa e Mastercard, com confirmação do banco'}</span>
+                  <span style={{ display: 'block', fontSize: 13, color: '#6E6861' }}>{k === 'mpesa' ? 'Fãs Vodacom confirmam com o PIN M-Pesa' : k === 'emola' ? 'Fãs Movitel confirmam com o PIN e-Mola' : k === 'bim' ? 'Fãs com Bim IZI confirmam marcando *181#' : 'Visa e Mastercard, com confirmação do banco'}</span>
                 </span>
                 {soon.includes(k)
                   ? <span style={{ flex: 'none', padding: '4px 10px', borderRadius: 999, background: '#FDE9DC', color: '#A83700', fontSize: 12, fontWeight: 600 }}>Em breve</span>
@@ -197,7 +197,7 @@ function Preview({ pg }: { pg: Page }) {
             </div>
             {pg.allow_custom && <span style={{ height: 32, borderRadius: 10, background: '#F8F5EF', border: '1px solid #ECE7DF', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 10px', fontSize: 10.5, color: '#57524B' }}><span>Outro valor</span><span className="mono">mín. {mtN(pg.min_amount)} MT</span></span>}
             <div style={{ display: 'flex', gap: 4, justifyContent: 'center', flexWrap: 'wrap' }}>
-              {(['mpesa', 'emola', 'card'] as const).filter(k => pg.channels[k] && !soon.includes(k)).map(k => <span key={k} style={{ padding: '2px 6px', borderRadius: 5, background: CH[k].bg, color: CH[k].fg, fontSize: 9.5, fontWeight: 600 }}>{CH[k].name}</span>)}
+              {(['mpesa', 'emola', 'bim', 'card'] as const).filter(k => pg.channels[k] && !soon.includes(k)).map(k => <span key={k} style={{ padding: '2px 6px', borderRadius: 5, background: CH[k].bg, color: CH[k].fg, fontSize: 9.5, fontWeight: 600 }}>{CH[k].name}</span>)}
             </div>
             <span style={{ height: 36, borderRadius: 11, background: '#D14400', color: '#fff', fontWeight: 600, fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Pagar {mtN(pg.amounts[pg.default_idx] || 0)} MT</span>
           </div>

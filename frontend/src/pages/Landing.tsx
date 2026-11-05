@@ -1,34 +1,34 @@
 import { FormEvent, ReactNode, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, ChartColumn, ChevronDown, Check, CircleAlert, CircleCheck, CreditCard, CupSoda, History, Inbox, Link as LinkIcon, Mic, Minus, PanelsTopLeft, Plus, ShieldCheck, Zap } from 'lucide-react';
+import { ArrowRight, ChartColumn, ChevronDown, Check, CircleAlert, CircleCheck, CupSoda, History, Inbox, Link as LinkIcon, Mic, Minus, PanelsTopLeft, Plus, ShieldCheck, Zap } from 'lucide-react';
 import { api } from '../lib/api';
 import { digits, fmt, fmtPhone, walletOf } from '../lib/format';
 import { useSession } from '../lib/session';
 import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '../lib/support';
-import { Brand, Logo, PoweredByRiha } from '../components/ui';
+import { Brand, Logo, PoweredByRiha, WalletLogo } from '../components/ui';
 import { homeFor } from './Auth';
 import './landing.css';
 
 const DOMAIN = 'pagarefresco.com';
 const FEE = 0.15;
 
-const FACTS = ['O fã paga com M-Pesa', 'Sem app e sem registo', 'Sem mensalidade', 'Valores em meticais', 'Levantas em até 72 horas', 'Cada membro do grupo recebe a sua parte', 'Feito em Maputo'];
+const FACTS = ['O fã paga com M-Pesa, e-Mola ou Bim IZI', 'Sem app e sem registo', 'Sem mensalidade', 'Valores em meticais', 'Levantas em até 72 horas', 'Cada membro do grupo recebe a sua parte', 'Feito em Maputo'];
 
 const SPLIT_EXAMPLES: [string, number][] = [['Hélio Tembe', 300], ['Ivânia Cuamba', 500], ['@arsenio.mz', 100], ['Shelsia Manhiça', 500], ['Lurdes Novela', 1000]];
 const SPLIT_MEMBERS: [string, number][] = [['Cardo', 70], ['Produção', 20], ['Edição', 10]];
 
 const FAQ: [string, string][] = [
-  ['Os fãs precisam de criar conta?', 'Não. Escolhem um valor, assinam com o nome ou com o @ e confirmam com o PIN do M-Pesa no telemóvel.'],
+  ['Os fãs precisam de criar conta?', 'Não. Escolhem um valor, assinam com o nome ou com o @ e confirmam no telemóvel.'],
   ['Como recebo o dinheiro?', 'Os apoios acumulam no teu saldo. Pedes o levantamento no painel, para o M-Pesa, e é pago em até 72 horas. O levantamento para o banco chega em breve.'],
   ['Como crio uma conta?', `Por agora o Refresco funciona por convite. Se recebeste um código, cria a conta em ${DOMAIN}/registar. Se não, entra na lista de espera nessa mesma página.`],
   ['Quanto custa?', 'O Refresco fica com 15% de cada apoio recebido. Não há mensalidade, custo de adesão nem taxa de levantamento.'],
   ['Como funciona a divisão para grupos?', 'O grupo define as percentagens uma vez. Cada apoio é dividido no momento do pagamento e cada parte entra no saldo de cada membro. Mudar a divisão exige a aprovação de todos.'],
-  ['Posso usar com e-Mola, Tmcel ou cartão?', 'Ainda não. Por agora os fãs pagam com M-Pesa, em números começados por 84 ou 85. O e-Mola e o cartão chegam em breve.'],
+  ['Como é que os fãs podem pagar?', 'Com M-Pesa, em números começados por 84 ou 85, com e-Mola, em números começados por 86 ou 87, ou com Bim IZI, marcando *181# no telemóvel.'],
 ];
 
 // Keeps names with a hyphen on one line.
 function nb(text: string): ReactNode {
-  return text.split(/(e-Mola|M-Pesa|Dá-lhe)/).map((t, i) => (i % 2 ? <span key={i} className="lp-nb">{t}</span> : t));
+  return text.split(/(e-Mola|M-Pesa|Bim IZI|Dá-lhe)/).map((t, i) => (i % 2 ? <span key={i} className="lp-nb">{t}</span> : t));
 }
 
 function Eyebrow({ children, light }: { children: ReactNode; light?: boolean }) {
@@ -173,9 +173,9 @@ function Steps() {
 function Payments() {
   const [phone, setPhone] = useState('');
   const op = walletOf(phone);
-  const demo = op === 'mpesa' ? { label: 'M-Pesa · Vodacom', bg: '#D14400', fg: '#FFFFFF' }
-    : op === 'emola' ? { label: 'e-Mola · Movitel, em breve', bg: '#1A1410', fg: '#FFFFFF' }
-      : op === 'tmcel' ? { label: 'Tmcel: ainda não suportada', bg: '#FBEFD9', fg: '#9A5B00' }
+  const demo = op === 'mpesa' ? { label: 'M-Pesa · Vodacom', bg: '#E60000', fg: '#FFFFFF' }
+    : op === 'emola' ? { label: 'e-Mola · Movitel', bg: '#F7871F', fg: '#1A1410' }
+      : op === 'tmcel' ? { label: 'Tmcel · paga com Bim IZI', bg: '#D0005C', fg: '#FFFFFF' }
         : phone.length >= 2 ? { label: 'Número inválido', bg: '#FDE9DC', fg: '#A83700' }
           : { label: 'Escreve um número', bg: '#ECE6DB', fg: '#57524B' };
   return (
@@ -185,11 +185,11 @@ function Payments() {
           <Eyebrow>Pagamentos</Eyebrow>
           <h2 className="lp-h2" style={{ maxWidth: 760 }}>Os fãs pagam como já pagam tudo.</h2>
         </div>
-        <p className="lp-muted" style={{ maxWidth: 380, margin: 0 }}>{nb('Sem conta e sem app nova. Basta o número de telemóvel e o PIN do M-Pesa.')}</p>
+        <p className="lp-muted" style={{ maxWidth: 380, margin: 0 }}>{nb('Sem conta e sem app nova. Basta o número de telemóvel.')}</p>
       </div>
       <div className="lp-grid3">
         <div className="lp-pay lp-pay-mpesa">
-          <div className="lp-row lp-between lp-top"><span className="lp-pay-mark display">M</span><span className="mono lp-pay-tag">84 · 85</span></div>
+          <div className="lp-row lp-between lp-top"><span className="lp-pay-mark"><WalletLogo wallet="mpesa" size={56} radius={17} /></span><span className="mono lp-pay-tag">84 · 85</span></div>
           <div><div className="display lp-pay-name">M-Pesa</div><div className="lp-pay-sub">Vodacom</div></div>
           <div className="lp-pay-steps">
             <span><i className="mono">1</i>Recebe o pedido no telemóvel</span>
@@ -198,14 +198,22 @@ function Payments() {
           </div>
         </div>
         <div className="lp-pay lp-pay-emola">
-          <div className="lp-row lp-between lp-top"><span className="lp-pay-mark display">e</span><span className="mono lp-pay-tag">86 · 87</span></div>
+          <div className="lp-row lp-between lp-top"><span className="lp-pay-mark"><WalletLogo wallet="emola" size={56} radius={17} /></span><span className="mono lp-pay-tag">86 · 87</span></div>
           <div><div className="display lp-pay-name">e-Mola</div><div className="lp-pay-sub">Movitel</div></div>
-          <div className="lp-pay-soon"><span className="lp-soon">Em breve</span>Até lá, os pagamentos são por M-Pesa.</div>
+          <div className="lp-pay-steps">
+            <span><i className="mono">1</i>Recebe o pedido no telemóvel</span>
+            <span><i className="mono">2</i>Confirma no e-Mola</span>
+            <span><i className="mono">3</i>Pronto</span>
+          </div>
         </div>
-        <div className="lp-pay lp-pay-card">
-          <div className="lp-row lp-between lp-top"><span className="lp-pay-mark"><CreditCard size={24} /></span><span className="lp-pay-brands"><Brand name="visa" size={18} color="#1A1F71" /><Brand name="mastercard" size={16} color="#EB001B" /></span></div>
-          <div><div className="display lp-pay-name">Cartão</div><div className="lp-pay-sub">Visa e Mastercard</div></div>
-          <div className="lp-pay-soon"><span className="lp-soon lp-soon-light">Em breve</span>Até lá, os pagamentos são por M-Pesa.</div>
+        <div className="lp-pay lp-pay-bim">
+          <div className="lp-row lp-between lp-top"><span className="lp-pay-mark"><WalletLogo wallet="bim" size={56} radius={17} /></span><span className="mono lp-pay-tag">*181#</span></div>
+          <div><div className="display lp-pay-name">Bim IZI</div><div className="lp-pay-sub">Millennium bim</div></div>
+          <div className="lp-pay-steps">
+            <span><i className="mono">1</i>Recebe um SMS</span>
+            <span><i className="mono">2</i>Marca *181# e confirma</span>
+            <span><i className="mono">3</i>Pronto</span>
+          </div>
         </div>
       </div>
       <div className="lp-detect">
@@ -368,7 +376,7 @@ function Pricing() {
         <div className="lp-price-list">
           <b className="lp-price-head">Tudo incluído</b>
           <Tick>Página com o teu link {DOMAIN}</Tick>
-          <Tick>{nb('Pagamentos por M-Pesa e e-Mola, com cartão em breve')}</Tick>
+          <Tick>{nb('Pagamentos por M-Pesa, e-Mola e Bim IZI')}</Tick>
           <Tick>Divisão automática para grupos</Tick>
           <Tick>Painel com mensagens, contactos e relatórios</Tick>
           <Tick>Ajuda em português: <a href={SUPPORT_MAILTO} className="lp-tel">{SUPPORT_EMAIL}</a></Tick>
@@ -399,7 +407,7 @@ function Questions() {
 export default function Landing() {
   const { me } = useSession();
   const h = useHandle();
-  useEffect(() => { document.title = 'Recebe apoios dos teus fãs por M-Pesa | Refresco'; }, []);
+  useEffect(() => { document.title = 'Recebe apoios dos teus fãs por M-Pesa, e-Mola e Bim IZI | Refresco'; }, []);
   const home = me ? homeFor(me) : '';
   return (
     <div className="lp">
@@ -428,7 +436,7 @@ export default function Landing() {
               Os teus fãs<br />pagam-te um<br />
               <span className="lp-h1-mark"><span className="lp-h1-dot" /><span className="lp-h1-bar" /><span className="lp-h1-word"><span /><span /><span>refresco</span></span><span>.</span></span>
             </h1>
-            <p className="lp-hero-lead">{nb('Cria a tua página de apoio em dois minutos. Os fãs pagam com M-Pesa e o dinheiro acumula no teu saldo até pedires o levantamento. O e-Mola e o cartão chegam em breve.')}</p>
+            <p className="lp-hero-lead">{nb('Cria a tua página de apoio em dois minutos. Os fãs pagam com M-Pesa, e-Mola ou Bim IZI e o dinheiro acumula no teu saldo até pedires o levantamento.')}</p>
             {me
               ? <Link className="lp-btn lp-btn-primary lp-btn-lg lp-self-start" to={home}>Abrir painel<ArrowRight size={18} /></Link>
               : <div className="lp-hero-claim"><ClaimForm h={h} id="lp-handle" /><HandleHint state={h.state} id="lp-handle-hint" /></div>}

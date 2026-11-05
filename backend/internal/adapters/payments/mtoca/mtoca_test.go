@@ -126,6 +126,22 @@ func TestCreateSendsWhatMtocaTakes(t *testing.T) {
 	}
 }
 
+func TestEachWalletHasItsChannel(t *testing.T) {
+	for _, tc := range []struct {
+		ch      d.Channel
+		phone   string
+		channel string
+	}{{d.ChannelMpesa, "841234567", "MPESA"}, {d.ChannelEmola, "861234567", "EMOLA"}, {d.ChannelBim, "821234567", "BIM"}} {
+		f := &fake{reply: map[string]any{"paymentStatus": "N"}}
+		g := gateway(t, f)
+		start(t, g, tc.ch, tc.phone)
+		eventually(t, func() bool { f.mu.Lock(); defer f.mu.Unlock(); return len(f.creates) == 1 })
+		if f.creates[0]["channel"] != tc.channel || f.creates[0]["phoneNumber"] != "258"+tc.phone {
+			t.Fatalf("%s: %v", tc.ch, f.creates[0])
+		}
+	}
+}
+
 func TestRefusesWhatItCannotTake(t *testing.T) {
 	g := gateway(t, &fake{})
 	for _, r := range []ports.PaymentRequest{{Amount: 100, Channel: d.ChannelCard, Phone: "841234567"}, {Amount: 0, Channel: d.ChannelMpesa, Phone: "841234567"}, {Amount: 100, Channel: d.ChannelMpesa, Phone: "84"}} {

@@ -45,6 +45,7 @@ const (
 type ChannelSet struct {
 	Mpesa bool `json:"mpesa"`
 	Emola bool `json:"emola"`
+	Bim   bool `json:"bim"`
 	Card  bool `json:"card"`
 }
 
@@ -54,13 +55,15 @@ func (c ChannelSet) Has(ch Channel) bool {
 		return c.Mpesa
 	case ChannelEmola:
 		return c.Emola
+	case ChannelBim:
+		return c.Bim
 	case ChannelCard:
 		return c.Card
 	}
 	return false
 }
 
-func (c ChannelSet) Any() bool { return c.Mpesa || c.Emola || c.Card }
+func (c ChannelSet) Any() bool { return c.Mpesa || c.Emola || c.Bim || c.Card }
 
 var SocialNetworks = []string{"youtube", "spotify", "instagram", "tiktok", "facebook", "x"}
 

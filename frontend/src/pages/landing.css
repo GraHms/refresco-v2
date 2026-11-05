@@ -138,13 +138,13 @@
 .lp-withdraw-when { flex: none; font-size: 12px; color: #A39C92; }
 
 .lp-pay { border-radius: 28px; padding: 26px; display: flex; flex-direction: column; gap: 22px; min-height: 340px; }
-.lp-pay-mpesa { background: var(--brand); color: #fff; }
-.lp-pay-emola { background: var(--ink); color: var(--cream); }
+.lp-pay-mpesa { background: #E60000; color: #fff; }
+.lp-pay-emola { background: #F7871F; color: #1A1410; }
+.lp-pay-bim { background: #D0005C; color: #fff; }
 .lp-pay-card { background: #fff; border: 1px solid var(--line); }
 .lp-pay-mark { flex: none; width: 56px; height: 56px; border-radius: 17px; display: grid; place-items: center; font-size: 24px; }
 .lp .lp-pay-mark { font-weight: 900; }
-.lp-pay-mpesa .lp-pay-mark { background: #fff; color: var(--brand); }
-.lp-pay-emola .lp-pay-mark { background: var(--cream); color: var(--ink); }
+.lp-pay-mpesa .lp-pay-mark, .lp-pay-emola .lp-pay-mark, .lp-pay-bim .lp-pay-mark { background: #fff; overflow: hidden; box-shadow: 0 0 0 2px rgba(255,255,255,.55); }
 .lp-pay-card .lp-pay-mark { background: #ECE6DB; }
 .lp-pay-tag { font-size: 12.5px; padding: 5px 9px; border-radius: 8px; background: rgba(255,255,255,.14); }
 .lp-pay-brands { display: flex; gap: 8px; align-items: center; height: 28px; padding: 0 9px; border-radius: 8px; background: var(--cream); }

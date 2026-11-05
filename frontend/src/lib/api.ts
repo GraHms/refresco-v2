@@ -28,13 +28,13 @@ export const api = {
   del: <T>(p: string) => request<T>('DELETE', p),
 };
 
-export type Channel = 'mpesa' | 'emola' | 'card';
+export type Channel = 'mpesa' | 'emola' | 'bim' | 'card';
 export type Money = number;
 
 export interface Page {
   id: string; name: string; handle: string; category: string; bio: string; thanks: string;
   amounts: Money[]; default_idx: number; allow_custom: boolean; min_amount: Money;
-  socials: Record<string, string>; channels: { mpesa: boolean; emola: boolean; card: boolean }; sandbox?: boolean; coming_soon?: Channel[];
+  socials: Record<string, string>; channels: { mpesa: boolean; emola: boolean; bim: boolean; card: boolean }; sandbox?: boolean; coming_soon?: Channel[];
 }
 
 export interface Me {
@@ -56,7 +56,7 @@ export interface SupportView {
   splits?: { member_id: string; name: string; pct: number; amount: Money }[]; hidden?: boolean;
 }
 
-export interface SeriesPoint { start: string; total: Money; fee: Money; by_channel: { mpesa: Money; emola: Money; card: Money }; count: number }
+export interface SeriesPoint { start: string; total: Money; fee: Money; by_channel: { mpesa: Money; emola: Money; bim: Money; card: Money }; count: number }
 
 export interface MemberView { id: string; name: string; role: string; pct: number; wallet: 'mpesa' | 'emola'; number: string; is_admin: boolean; invited: boolean; balance: Money }
 

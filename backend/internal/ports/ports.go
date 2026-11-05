@@ -186,10 +186,11 @@ const (
 type ChannelTotals struct {
 	Mpesa d.Money `json:"mpesa"`
 	Emola d.Money `json:"emola"`
+	Bim   d.Money `json:"bim"`
 	Card  d.Money `json:"card"`
 }
 
-func (c ChannelTotals) Sum() d.Money { return c.Mpesa + c.Emola + c.Card }
+func (c ChannelTotals) Sum() d.Money { return c.Mpesa + c.Emola + c.Bim + c.Card }
 
 type SeriesPoint struct {
 	Start  time.Time     `json:"start"`

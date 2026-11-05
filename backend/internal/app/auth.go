@@ -269,7 +269,7 @@ func (a *App) Register(ctx context.Context, in RegisterInput) (*Session, error) 
 			Thanks:  "Kanimambo! O teu apoio faz toda a diferença.",
 			Amounts: []d.Money{100 * d.MT, 300 * d.MT, 500 * d.MT, 1000 * d.MT}, DefaultIdx: 1,
 			AllowCustom: true, MinAmount: d.MinCustomFloor, Socials: map[string]string{},
-			Channels: d.ChannelSet{Mpesa: true, Emola: true, Card: true},
+			Channels: d.ChannelSet{Mpesa: true, Emola: true, Bim: true, Card: true},
 			FeeBPS:   inv.FeeBPS, Status: d.AccountPending, StatusNote: "Falta validar o BI antes do primeiro levantamento.",
 			InviteCode: inv.Code, AutoSplit: true, CreatedAt: now,
 		}

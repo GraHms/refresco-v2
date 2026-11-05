@@ -68,7 +68,7 @@ export default function Inbox() {
           <input value={q} onChange={e => setQ(e.target.value)} placeholder="Procurar por nome, mensagem ou contacto" aria-label="Procurar" style={{ flex: 1, minWidth: 0, border: 0, outline: 'none', background: 'transparent', fontSize: 14 }} />
         </label>
         <div style={{ display: 'flex', gap: 6, overflowX: 'auto', maxWidth: '100%' }}>
-          {([['all', 'Todos'], ['mpesa', 'M-Pesa'], ['emola', 'e-Mola'], ['card', 'Cartão']] as const).map(([k, l]) => (
+          {([['all', 'Todos'], ['mpesa', 'M-Pesa'], ['emola', 'e-Mola'], ['bim', 'Bim IZI']] as const).map(([k, l]) => (
             <button key={k} className={'chip' + (chF === k ? ' on' : '')} onClick={() => setChF(k)}>{l}<span className="mono" style={{ fontSize: 11.5, opacity: 0.65 }}>{list ? (k === 'all' ? list.all : list.channels[k] || 0) : ''}</span></button>
           ))}
         </div>

@@ -89,7 +89,7 @@ func run(log *slog.Logger) error {
 		Thanks:  "Kanimambo! O teu apoio ajuda a trazer mais conversas de Tu Pra Tu.",
 		Amounts: []d.Money{100 * d.MT, 300 * d.MT, 500 * d.MT, 1000 * d.MT}, DefaultIdx: 1, AllowCustom: true, MinAmount: 50 * d.MT,
 		Socials:  map[string]string{"youtube": "@tupratupodcast", "spotify": "tupratu", "instagram": "tupratupodcast", "tiktok": "tupratupod", "x": "Tupratupodcast"},
-		Channels: d.ChannelSet{Mpesa: true, Emola: true, Card: true}}); err != nil {
+		Channels: d.ChannelSet{Mpesa: true, Emola: true, Bim: true, Card: true}}); err != nil {
 		return err
 	}
 	admin := &d.User{}

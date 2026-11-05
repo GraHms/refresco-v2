@@ -9,7 +9,7 @@ import { SupportRow } from './Inbox';
 
 interface Overview {
   range: string; gross: number; net: number; fee: number; gross_prev: number; count: number; count_prev: number; supporters: number;
-  average: number; top_amount: number; by_channel: { mpesa: number; emola: number; card: number }; series: SeriesPoint[]; bucket: 'day' | 'month';
+  average: number; top_amount: number; by_channel: { mpesa: number; emola: number; bim: number; card: number }; series: SeriesPoint[]; bucket: 'day' | 'month';
   fee_bps: number; split: { member_id: string; name: string; pct: number; wallet: 'mpesa' | 'emola'; amount: number }[]; recent: SupportView[]; unread: number;
 }
 
@@ -37,8 +37,10 @@ export default function Overview() {
   const month = o?.bucket === 'month';
   const n = pts.length;
   const barGap = n > 20 ? (mobile ? '2px' : '5px') : n > 10 ? '8px' : '14px';
-  const tot = o?.by_channel || { mpesa: 0, emola: 0, card: 0 };
-  const sum = tot.mpesa + tot.emola + tot.card;
+  const tot = o?.by_channel || { mpesa: 0, emola: 0, bim: 0, card: 0 };
+  // Cards only show if there ever were card payments.
+  const shown = (['mpesa', 'emola', 'bim', 'card'] as const).filter(k => k !== 'card' || tot.card > 0);
+  const sum = tot.mpesa + tot.emola + tot.bim + tot.card;
   const lbl = (p: SeriesPoint, i: number) => month ? (mobile ? (i % 3 === 0 ? bucketLabel(p.start, true, true) : '') : bucketLabel(p.start, true, true))
     : n <= 7 ? ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][weekdayOf(p.start)] : weekdayOf(p.start) === 5 ? bucketLabel(p.start, false, true) : '';
 
@@ -78,7 +80,7 @@ export default function Overview() {
             <div><div style={{ fontSize: 14, color: '#57524B' }}>{hp ? bucketLabel(hp.start, month, false) : 'Total · ' + R[2]}</div>
               <div className="display" style={{ marginTop: 2, fontWeight: 800, fontSize: 26, letterSpacing: '-0.03em', lineHeight: 1.1 }}>{mt(hp ? hp.total : sum)}</div></div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 16px', fontSize: 13 }}>
-              {(['mpesa', 'emola', 'card'] as const).map(k => (
+              {shown.map(k => (
                 <span key={k} style={{ display: 'flex', alignItems: 'center', gap: 7 }}><span style={{ width: 10, height: 10, borderRadius: 3, background: CH[k].bar }} /><span style={{ color: '#57524B' }}>{CH[k].name}</span><span className="mono" style={{ fontSize: 12.5 }}>{mt(hp ? hp.by_channel[k] : tot[k])}</span></span>
               ))}
             </div>
@@ -92,6 +94,7 @@ export default function Overview() {
                 <div key={i} onMouseEnter={() => setHot(i)} onClick={() => setHot(i)} style={{ flex: 1, minWidth: 0, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', cursor: 'pointer' }}>
                   <div style={{ height: (p.total / max * 100).toFixed(1) + '%', display: 'flex', flexDirection: 'column', gap: p.total ? 2 : 0, opacity: hot == null || hot === i ? 1 : 0.3, transition: 'height .5s cubic-bezier(.2,.8,.2,1),opacity .15s' }}>
                     <div style={{ flex: p.by_channel.card, background: '#CFC6B8', borderRadius: '5px 5px 2px 2px' }} />
+                    <div style={{ flex: p.by_channel.bim, background: '#D0005C', borderRadius: 2 }} />
                     <div style={{ flex: p.by_channel.emola, background: '#F7871F', borderRadius: 2 }} />
                     <div style={{ flex: p.by_channel.mpesa, background: '#E60000', borderRadius: '2px 2px 4px 4px' }} />
                   </div>
@@ -106,10 +109,10 @@ export default function Overview() {
         <div className="card" style={{ flex: '1 1 280px', minWidth: 0, padding: 22, display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div style={{ fontWeight: 600, fontSize: 15 }}>Por canal</div>
           <div style={{ display: 'flex', gap: 4, height: 14 }}>
-            {(['mpesa', 'emola', 'card'] as const).map(k => <span key={k} style={{ flex: tot[k] || (sum ? 0 : 1), background: CH[k].bar, borderRadius: 4, transition: 'flex-grow .5s' }} />)}
+            {shown.map(k => <span key={k} style={{ flex: tot[k] || (sum ? 0 : 1), background: CH[k].bar, borderRadius: 4, transition: 'flex-grow .5s' }} />)}
           </div>
           <div>
-            {(['mpesa', 'emola', 'card'] as const).map(k => (
+            {shown.map(k => (
               <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0', borderTop: '1px solid #F0EBE3' }}>
                 <span style={{ width: 10, height: 10, borderRadius: 3, background: CH[k].bar }} />
                 <span style={{ flex: 1, lineHeight: 1.3 }}><span style={{ display: 'block', fontWeight: 600 }}>{CH[k].name}</span><span style={{ display: 'block', fontSize: 12.5, color: '#6E6861' }}>{CH[k].op}</span></span>

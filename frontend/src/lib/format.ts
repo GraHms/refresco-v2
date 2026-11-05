@@ -67,6 +67,7 @@ export const avOf = (key: string) => { let h = 0; for (const c of key) h = (h * 
 export const CH = {
   mpesa: { name: 'M-Pesa', op: 'Vodacom', bg: '#FDE7E7', fg: '#B80000', bar: '#E60000' },
   emola: { name: 'e-Mola', op: 'Movitel', bg: '#FFF0E0', fg: '#B45F00', bar: '#F7871F' },
+  bim: { name: 'Bim IZI', op: 'Millennium bim', bg: '#FCE3F0', fg: '#A3005C', bar: '#D0005C' },
   card: { name: 'Cartão', op: 'Visa · Mastercard', bg: '#ECE6DB', fg: '#1A1410', bar: '#CFC6B8' },
 } as const;
 

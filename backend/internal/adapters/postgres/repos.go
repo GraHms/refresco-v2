@@ -57,7 +57,7 @@ type accountRepo struct{ db *gorm.DB }
 func toAccount(m *accountModel) *d.Account {
 	a := &d.Account{ID: m.ID, OwnerID: m.OwnerID, Handle: m.Handle, Name: m.Name, Category: m.Category, Bio: m.Bio, Thanks: m.Thanks,
 		DefaultIdx: m.DefaultIdx, AllowCustom: m.AllowCustom, MinAmount: d.Money(m.MinAmount), Socials: map[string]string{},
-		Channels: d.ChannelSet{Mpesa: m.ChMpesa, Emola: m.ChEmola, Card: m.ChCard}, FeeBPS: d.BPS(m.FeeBPS), FeeNote: m.FeeNote, FeeUntil: m.FeeUntil,
+		Channels: d.ChannelSet{Mpesa: m.ChMpesa, Emola: m.ChEmola, Bim: m.ChBim, Card: m.ChCard}, FeeBPS: d.BPS(m.FeeBPS), FeeNote: m.FeeNote, FeeUntil: m.FeeUntil,
 		Status: d.AccountStatus(m.Status), StatusNote: m.StatusNote, InviteCode: m.InviteCode, AutoSplit: m.AutoSplit, CreatedAt: m.CreatedAt}
 	for _, v := range m.Amounts {
 		a.Amounts = append(a.Amounts, d.Money(v))
@@ -73,7 +73,7 @@ func toAccount(m *accountModel) *d.Account {
 func fromAccount(a *d.Account) *accountModel {
 	m := &accountModel{ID: a.ID, OwnerID: a.OwnerID, Handle: a.Handle, Name: a.Name, Category: a.Category, Bio: a.Bio, Thanks: a.Thanks,
 		DefaultIdx: a.DefaultIdx, AllowCustom: a.AllowCustom, MinAmount: int64(a.MinAmount), Socials: datatypes.JSONMap{},
-		ChMpesa: a.Channels.Mpesa, ChEmola: a.Channels.Emola, ChCard: a.Channels.Card, FeeBPS: int(a.FeeBPS), FeeNote: a.FeeNote, FeeUntil: a.FeeUntil,
+		ChMpesa: a.Channels.Mpesa, ChEmola: a.Channels.Emola, ChBim: a.Channels.Bim, ChCard: a.Channels.Card, FeeBPS: int(a.FeeBPS), FeeNote: a.FeeNote, FeeUntil: a.FeeUntil,
 		Status: string(a.Status), StatusNote: a.StatusNote, InviteCode: a.InviteCode, AutoSplit: a.AutoSplit, CreatedAt: a.CreatedAt}
 	for _, v := range a.Amounts {
 		m.Amounts = append(m.Amounts, int64(v))
@@ -385,7 +385,7 @@ func (r supportRepo) ChannelCounts(ctx context.Context, acc string) (map[d.Chann
 	if err := r.db.WithContext(ctx).Model(&supportModel{}).Select("channel, count(*) AS n").Where("account_id = ?", acc).Group("channel").Scan(&rows).Error; err != nil {
 		return nil, err
 	}
-	out := map[d.Channel]int64{d.ChannelMpesa: 0, d.ChannelEmola: 0, d.ChannelCard: 0}
+	out := map[d.Channel]int64{d.ChannelMpesa: 0, d.ChannelEmola: 0, d.ChannelBim: 0, d.ChannelCard: 0}
 	for _, x := range rows {
 		out[d.Channel(x.Channel)] = x.N
 	}
@@ -435,7 +435,7 @@ func (r supportRepo) Unsettled(ctx context.Context, since time.Time, limit int) 
 	var rows []supportModel
 	err := r.db.WithContext(ctx).
 		Where("status IN ? AND provider_ref IS NOT NULL AND provider_ref <> '' AND channel IN ? AND created_at >= ?",
-			[]string{string(d.SupportPending), string(d.SupportExpired)}, []string{string(d.ChannelMpesa), string(d.ChannelEmola)}, since).
+			[]string{string(d.SupportPending), string(d.SupportExpired)}, []string{string(d.ChannelMpesa), string(d.ChannelEmola), string(d.ChannelBim)}, since).
 		Order("created_at").Limit(limit).Find(&rows).Error
 	if err != nil {
 		return nil, err

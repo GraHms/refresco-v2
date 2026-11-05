@@ -81,9 +81,9 @@ func (a *App) CreateSupport(ctx context.Context, handle string, in CreateSupport
 	case in.Channel.IsWallet():
 		p := d.NormalizeMZPhone(in.Phone)
 		if p == "" {
-			return nil, d.Invalid("invalid_phone", "Número inválido. Deve começar por 84, 85, 86 ou 87.")
+			return nil, d.Invalid("invalid_phone", "Número inválido. Usa um número moçambicano de 9 dígitos.")
 		}
-		if d.WalletOf(p) != in.Channel {
+		if in.Channel != d.ChannelBim && d.WalletOf(p) != in.Channel {
 			return nil, d.Invalid("wallet_mismatch", "Este número não pertence a esta carteira.")
 		}
 		s.PayerPhone = p
@@ -153,6 +153,8 @@ func refPrefix(c d.Channel) string {
 		return "MP"
 	case d.ChannelEmola:
 		return "EM"
+	case d.ChannelBim:
+		return "BI"
 	}
 	return "CD"
 }

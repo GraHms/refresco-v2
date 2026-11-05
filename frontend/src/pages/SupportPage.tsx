@@ -7,7 +7,7 @@ import { dateTime, digits, fmt, fmtPhone, luhn, mtN, uid, walletOf } from '../li
 import { Brand, BrandName, Logo, PoweredByRiha, SOCIALS, WalletLogo } from '../components/ui';
 
 const NETS: [string, string, BrandName][] = [['x', 'X', 'x'], ['instagram', 'Instagram', 'instagram'], ['tiktok', 'TikTok', 'tiktok'], ['facebook', 'Facebook', 'facebook'], ['youtube', 'YouTube', 'youtube']];
-const CHN = { mpesa: 'M-Pesa', emola: 'e-Mola' } as const;
+const CHN = { mpesa: 'M-Pesa', emola: 'e-Mola', bim: 'Bim IZI' } as const;
 const RED = '#B42318';
 
 type Phase = 'form' | 'wait' | 'otp' | 'done';
@@ -92,8 +92,9 @@ function SupportCard({ page }: { page: Page }) {
   const presets = page.amounts.map(a => a / 100);
   const def = presets[page.default_idx] ?? presets[0];
   const min = page.min_amount / 100;
-  const methods = (['mpesa', 'emola', 'card'] as Channel[]).filter(c => page.channels[c]);
-  const soon = (page.coming_soon || []) as Channel[];
+  const methods = (['mpesa', 'emola', 'bim', 'card'] as Channel[]).filter(c => page.channels[c]);
+  // Cards simply aren't shown until they can be used.
+  const soon = ((page.coming_soon || []) as Channel[]).filter(c => c !== 'card');
   const cardRef = useRef<HTMLElement>(null);
 
   const [phase, setPhase] = useState<Phase>('form');
@@ -118,15 +119,21 @@ function SupportCard({ page }: { page: Page }) {
 
   const total = custom ? parseInt(custom, 10) || 0 : amt;
   const isWallet = method !== 'card';
-  const ch = isWallet ? method as 'mpesa' | 'emola' : 'mpesa';
+  const ch = isWallet ? method as 'mpesa' | 'emola' | 'bim' : 'mpesa';
   const op = walletOf(phone);
   const isHandle = name.startsWith('@');
 
   const ph = useMemo(() => {
-    let hint = `Vais receber um pedido ${CHN[ch]} para confirmar com o PIN.`, color = '#6E6861', icon: 'info' | 'alert' | 'ok' = 'info', valid = false, canSwitch = false;
-    if (phone.length >= 2) {
+    let hint = ch === 'bim' ? 'Vais receber um SMS. Depois marca *181# para confirmar.' : `Vais receber um pedido ${CHN[ch]} para confirmar com o PIN.`, color = '#6E6861', icon: 'info' | 'alert' | 'ok' = 'info', valid = false, canSwitch = false;
+    if (ch === 'bim') {
+      // IZI isn't tied to one operator's numbers.
+      if (phone.length >= 2 && !op) { hint = 'Número inválido. Usa um número moçambicano de 9 dígitos.'; color = RED; icon = 'alert'; }
+      else if (phone.length === 9) { valid = true; hint = 'Vais receber um SMS. Depois marca *181# para confirmar.'; color = '#17803D'; icon = 'ok'; }
+      else if (phone.length >= 2) { const left = 9 - phone.length; hint = left === 1 ? 'Falta 1 dígito' : `Faltam ${left} dígitos`; if (tried) { color = RED; icon = 'alert'; } }
+      else if (tried) { hint = 'Escreve o teu número.'; color = RED; icon = 'alert'; }
+    } else if (phone.length >= 2) {
       const opName = op === 'mpesa' ? 'Número Vodacom' : 'Número Movitel';
-      if (op === 'tmcel') { hint = page.channels.card ? 'A Tmcel ainda não é suportada. Paga com cartão.' : 'A Tmcel ainda não é suportada. Usa um número M-Pesa (84 ou 85).'; color = RED; icon = 'alert'; }
+      if (op === 'tmcel') { hint = page.channels.bim ? 'Este número é Tmcel. Paga com Bim IZI, se tiveres conta.' : 'Este número é Tmcel. Usa um número M-Pesa (84 ou 85).'; color = RED; icon = 'alert'; }
       else if (!op) { hint = 'Número inválido. Deve começar por 84, 85, 86 ou 87.'; color = RED; icon = 'alert'; }
       else if (op !== ch) { hint = op === 'mpesa' ? 'Este número é Vodacom.' : page.channels.emola ? 'Este número é Movitel.' : 'O e-Mola chega em breve. Por agora usa um número M-Pesa (84 ou 85).'; color = RED; icon = 'alert'; canSwitch = page.channels[op]; }
       else if (phone.length < 9) { const left = 9 - phone.length; hint = `${opName} · ${left === 1 ? 'falta 1 dígito' : `faltam ${left} dígitos`}`; if (tried) { color = RED; icon = 'alert'; } }
@@ -287,7 +294,7 @@ function SupportCard({ page }: { page: Page }) {
             <div style={{ display: 'grid', gridTemplateColumns: `repeat(${methods.length + soon.length},minmax(0,1fr))`, gap: 8 }}>
               {methods.map(k => {
                 const on = method === k;
-                const label = ({ mpesa: 'M-Pesa', emola: 'e-Mola', card: 'Cartão' } as const)[k];
+                const label = ({ mpesa: 'M-Pesa', emola: 'e-Mola', bim: 'Bim IZI', card: 'Cartão' } as const)[k];
                 return (
                   <button key={k} type="button" onClick={() => { setMethod(k); setTried(false); }} aria-pressed={on}
                     style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, height: 72, borderRadius: 16, border: `1.5px solid ${on ? '#D14400' : '#E4DDD1'}`, background: on ? '#FFF4EC' : '#fff', transition: 'border-color .2s,background-color .2s' }}>
@@ -297,10 +304,10 @@ function SupportCard({ page }: { page: Page }) {
                 );
               })}
               {soon.map(k => {
-                const label = ({ mpesa: 'M-Pesa', emola: 'e-Mola', card: 'Cartão' } as const)[k];
+                const label = ({ mpesa: 'M-Pesa', emola: 'e-Mola', bim: 'Bim IZI', card: 'Cartão' } as const)[k];
                 return (
                   <div key={k} aria-disabled="true" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, height: 72, borderRadius: 16, border: '1.5px dashed #E4DDD1', background: '#FBF7F1', color: '#6E6861' }}>
-                    {k === 'card' ? <span style={{ width: 24, height: 24, borderRadius: 7, background: '#ECE6DB', color: '#1A1410', opacity: 0.45, display: 'grid', placeItems: 'center' }}><CreditCard size={13} /></span> : <WalletLogo wallet={k} size={24} radius={7} style={{ opacity: 0.45 }} />}
+                    <WalletLogo wallet={k} size={24} radius={7} style={{ opacity: 0.45 }} />
                     <span style={{ fontSize: 12, fontWeight: 600 }}>{label}</span>
                     <span style={{ fontSize: 10.5, fontWeight: 600, color: '#A83700' }}>Em breve</span>
                   </div>
@@ -311,7 +318,7 @@ function SupportCard({ page }: { page: Page }) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <div style={{ display: 'flex', alignItems: 'center', height: 52, borderRadius: 14, border: `1.5px solid ${ph.color === RED ? RED : ph.valid ? '#1A1410' : '#E4DDD1'}`, background: '#fff', overflow: 'hidden', transition: 'border-color .2s' }}>
                   <span className="mono" style={{ padding: '0 12px', height: '100%', display: 'flex', alignItems: 'center', borderRight: '1px solid #EFE7DC', fontSize: 14, color: '#57524B', background: '#FBF7F1' }}>+258</span>
-                  <input type="tel" inputMode="numeric" autoComplete="tel-national" value={fmtPhone(phone)} onChange={e => setPhone(digits(e.target.value, 9))} placeholder={ch === 'mpesa' ? '84 123 4567' : '86 123 4567'} aria-label={'Número ' + CHN[ch]}
+                  <input type="tel" inputMode="numeric" autoComplete="tel-national" value={fmtPhone(phone)} onChange={e => setPhone(digits(e.target.value, 9))} placeholder={ch === 'mpesa' ? '84 123 4567' : ch === 'bim' ? '82 123 4567' : '86 123 4567'} aria-label={'Número ' + CHN[ch]}
                     className="mono" style={{ flex: 1, minWidth: 0, height: '100%', border: 0, outline: 'none', padding: '0 12px', fontSize: 16, background: 'transparent' }} />
                 </div>
                 <span style={{ display: 'flex', alignItems: 'flex-start', flexWrap: 'wrap', gap: 6, fontSize: 12.5, lineHeight: 1.4, color: ph.color }}>
@@ -374,7 +381,7 @@ function SupportCard({ page }: { page: Page }) {
             {busy ? <span className="spinner" /> : <Lock size={16} />}{reconnecting ? 'A aguardar ligação…' : amountOk && total > 0 ? `Pagar ${fmt(total)} MT` : 'Pagar'}
           </button>
           <div style={{ marginTop: -8, textAlign: 'center', fontSize: 12.5, lineHeight: 1.45, color: '#6E6861' }}>
-            {isWallet ? 'Confirmas com o PIN no teu telemóvel. Nunca te pedimos o PIN aqui.' : 'Visa e Mastercard. O teu banco pode pedir um código de confirmação.'}
+            {method === 'bim' ? 'Confirmas no teu telemóvel, marcando *181#. Nunca te pedimos o PIN aqui.' : isWallet ? 'Confirmas com o PIN no teu telemóvel. Nunca te pedimos o PIN aqui.' : 'Visa e Mastercard. O teu banco pode pedir um código de confirmação.'}
           </div>
           <div style={{ marginTop: -10, textAlign: 'center', fontSize: 12, lineHeight: 1.45, color: '#8A837A' }}>{isWallet ? `${page.name} vê o valor, o teu nome, a mensagem e o teu número, para te poder agradecer.` : `${page.name} vê o valor, o teu nome e a mensagem. Não partilhamos os dados do cartão.`}</div>
         </div>
@@ -391,17 +398,17 @@ function SupportCard({ page }: { page: Page }) {
               <span style={{ flex: 1, borderRadius: 21, background: '#2E2721', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 9 }}>
                 <span style={{ background: '#fff', borderRadius: 12, padding: 10, textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 7 }}>
                   <span className="mono" style={{ fontSize: 9.5, letterSpacing: '.06em', color: '#6E6861', textTransform: 'uppercase' }}>{CHN[sup.channel as 'mpesa']}</span>
-                  <span style={{ fontSize: 10.5, lineHeight: 1.35 }}>{sup.channel === 'mpesa' ? <>Vais pagar <b>{mtN(sup.amount, 2)} MT</b> na Entidade BIM PAY IZI. Digita o teu PIN</> : <>Confirma o pagamento de <b>{mtN(sup.amount, 2)} MT</b> no telemóvel.</>}</span>
-                  <span className="mono" style={{ height: 22, borderRadius: 6, border: '1px solid #D9D1C4', display: 'flex', alignItems: 'center', padding: '0 7px', letterSpacing: '.3em', fontSize: 11 }}>••••</span>
+                  <span style={{ fontSize: 10.5, lineHeight: 1.35 }}>{sup.channel === 'mpesa' ? <>Vais pagar <b>{mtN(sup.amount, 2)} MT</b> na Entidade BIM PAY IZI. Digita o teu PIN</> : sup.channel === 'bim' ? <>PAY IZI PAYMENT<br />MASHTECHNO LDA<br />Amount: <b>{mtN(sup.amount, 2)} MZN</b><br />1 - Confirm<br />0 - Cancel</> : <>Confirma o pagamento de <b>{mtN(sup.amount, 2)} MT</b> no telemóvel.</>}</span>
+                  {sup.channel !== 'bim' && <span className="mono" style={{ height: 22, borderRadius: 6, border: '1px solid #D9D1C4', display: 'flex', alignItems: 'center', padding: '0 7px', letterSpacing: '.3em', fontSize: 11 }}>••••</span>}
                 </span>
               </span>
             </span>
           </button>
           <div>
-            <div className="display" style={{ fontWeight: 700, fontSize: 22, lineHeight: 1.12, letterSpacing: '-0.025em' }}>{failed ? 'O pagamento não foi concluído' : 'Confirma no teu telemóvel'}</div>
+            <div className="display" style={{ fontWeight: 700, fontSize: 22, lineHeight: 1.12, letterSpacing: '-0.025em' }}>{failed ? 'O pagamento não foi concluído' : sup.channel === 'bim' ? 'Marca *181# no teu telemóvel' : 'Confirma no teu telemóvel'}</div>
             <p style={{ margin: '8px auto 0', maxWidth: 320, fontSize: 14.5, color: '#57524B' }}>
               {failed ? <>{sup.fail_reason || 'O pedido expirou'}. Podes reenviar o pedido ou voltar.</> :
-                <>O pedido de <b style={{ color: '#1A1410' }}>{mtN(sup.amount)} MT</b> para <span className="mono" style={{ color: '#1A1410', whiteSpace: 'nowrap' }}>+258 {fmtPhone(phone)}</span> pode demorar até um minuto a chegar. {sup.channel === 'mpesa' ? <>Aparece em nome de <b style={{ color: '#1A1410' }}>BIM PAY IZI</b>. Insere o teu PIN M-Pesa.</> : <>Segue as instruções de {CHN[sup.channel as 'emola']} no telemóvel. A internet pode falhar enquanto o pedido está aberto: mostramos o resultado assim que voltar.</>}</>}
+                sup.channel === 'bim' ? <>O SMS para <span className="mono" style={{ color: '#1A1410', whiteSpace: 'nowrap' }}>+258 {fmtPhone(phone)}</span> pode demorar até um minuto a chegar. Marca <b style={{ color: '#1A1410' }}>*181#</b> e escolhe <b style={{ color: '#1A1410' }}>1 - Confirm</b> para pagar <b style={{ color: '#1A1410' }}>{mtN(sup.amount)} MT</b>.</> : <>O pedido de <b style={{ color: '#1A1410' }}>{mtN(sup.amount)} MT</b> para <span className="mono" style={{ color: '#1A1410', whiteSpace: 'nowrap' }}>+258 {fmtPhone(phone)}</span> pode demorar até um minuto a chegar. {sup.channel === 'mpesa' ? <>Aparece em nome de <b style={{ color: '#1A1410' }}>BIM PAY IZI</b>. Insere o teu PIN M-Pesa.</> : <>Segue as instruções de {CHN[sup.channel as 'emola']} no telemóvel. A internet pode falhar enquanto o pedido está aberto: mostramos o resultado assim que voltar.</>}</>}
             </p>
           </div>
           {reconnecting && <div role="status" style={{ width: '100%', padding: '11px 14px', borderRadius: 12, background: '#FBEFD9', color: '#5B4600', fontSize: 13.5, lineHeight: 1.45 }}>O M-Pesa pode cortar a internet enquanto o pedido está aberto. Não precisas de fazer nada: o pagamento continua e atualizamos assim que a ligação voltar.</div>}

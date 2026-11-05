@@ -37,6 +37,7 @@ type accountModel struct {
 	Socials     datatypes.JSONMap          `gorm:"type:jsonb;not null"`
 	ChMpesa     bool                       `gorm:"not null"`
 	ChEmola     bool                       `gorm:"not null"`
+	ChBim       bool                       `gorm:"not null;default:true"`
 	ChCard      bool                       `gorm:"not null"`
 	FeeBPS      int                        `gorm:"not null;check:fee_bps_range,fee_bps >= 0 AND fee_bps <= 5000"`
 	FeeNote     string                     `gorm:"size:240;not null;default:''"`

@@ -139,8 +139,8 @@ export async function copy(text: string) {
 }
 
 // The wallets' real logos, as they appear on the customer's phone.
-export function WalletLogo({ wallet, size = 30, radius = 9, style }: { wallet: 'mpesa' | 'emola'; size?: number; radius?: number; style?: CSSProperties }) {
-  return <img src={`/assets/methods/${wallet}.png`} alt={wallet === 'mpesa' ? 'M-Pesa' : 'e-Mola'} width={size} height={size} style={{ display: 'block', flex: 'none', width: size, height: size, borderRadius: radius, objectFit: 'cover', ...style }} />;
+export function WalletLogo({ wallet, size = 30, radius = 9, style }: { wallet: 'mpesa' | 'emola' | 'bim'; size?: number; radius?: number; style?: CSSProperties }) {
+  return <img src={`/assets/methods/${wallet}.png`} alt={{ mpesa: 'M-Pesa', emola: 'e-Mola', bim: 'Bim IZI' }[wallet]} width={size} height={size} style={{ display: 'block', flex: 'none', width: size, height: size, borderRadius: radius, objectFit: 'cover', ...style }} />;
 }
 
 export function PoweredByRiha({ style }: { style?: CSSProperties }) {

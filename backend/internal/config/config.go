@@ -147,7 +147,7 @@ func Load() (Config, error) {
 		if c.MpesaAPIKey == "" || c.MpesaPublicKey == "" || c.MpesaProviderCode == "" {
 			return c, errors.New("PAYMENTS_PROVIDER=mpesa needs MPESA_API_KEY, MPESA_PUBLIC_KEY and MPESA_SERVICE_PROVIDER_CODE")
 		}
-		c.ComingSoon = domain.ChannelSet{Emola: true, Card: true}
+		c.ComingSoon = domain.ChannelSet{Emola: true, Bim: true, Card: true}
 	case "mtoca":
 		if err := checkMtocaURL(c.MtocaURL, c.Production()); err != nil {
 			return c, err

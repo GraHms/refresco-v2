@@ -47,6 +47,8 @@ func addChan(c *ports.ChannelTotals, ch string, v d.Money) {
 		c.Mpesa += v
 	case d.ChannelEmola:
 		c.Emola += v
+	case d.ChannelBim:
+		c.Bim += v
 	case d.ChannelCard:
 		c.Card += v
 	}

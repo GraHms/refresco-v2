@@ -36,7 +36,7 @@ const (
 	forgetAfter = 2 * time.Hour
 )
 
-var channels = map[d.Channel]string{d.ChannelMpesa: "MPESA", d.ChannelEmola: "EMOLA"}
+var channels = map[d.Channel]string{d.ChannelMpesa: "MPESA", d.ChannelEmola: "EMOLA", d.ChannelBim: "BIM"}
 
 type Config struct {
 	BaseURL     string
