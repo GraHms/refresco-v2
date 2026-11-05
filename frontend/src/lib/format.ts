@@ -65,8 +65,8 @@ export const SEG: [string, string][] = [['#D14400', '#FFFFFF'], ['#1A1410', '#FF
 export const avOf = (key: string) => { let h = 0; for (const c of key) h = (h * 31 + c.charCodeAt(0)) >>> 0; return AV[h % AV.length]; };
 
 export const CH = {
-  mpesa: { name: 'M-Pesa', op: 'Vodacom', bg: '#FDE9DC', fg: '#A83700', bar: '#D14400' },
-  emola: { name: 'e-Mola', op: 'Movitel', bg: '#1A1410', fg: '#FFFFFF', bar: '#1A1410' },
+  mpesa: { name: 'M-Pesa', op: 'Vodacom', bg: '#FDE7E7', fg: '#B80000', bar: '#E60000' },
+  emola: { name: 'e-Mola', op: 'Movitel', bg: '#FFF0E0', fg: '#B45F00', bar: '#F7871F' },
   card: { name: 'Cartão', op: 'Visa · Mastercard', bg: '#ECE6DB', fg: '#1A1410', bar: '#CFC6B8' },
 } as const;
 

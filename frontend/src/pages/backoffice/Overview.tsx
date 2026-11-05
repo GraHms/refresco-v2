@@ -92,8 +92,8 @@ export default function Overview() {
                 <div key={i} onMouseEnter={() => setHot(i)} onClick={() => setHot(i)} style={{ flex: 1, minWidth: 0, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', cursor: 'pointer' }}>
                   <div style={{ height: (p.total / max * 100).toFixed(1) + '%', display: 'flex', flexDirection: 'column', gap: p.total ? 2 : 0, opacity: hot == null || hot === i ? 1 : 0.3, transition: 'height .5s cubic-bezier(.2,.8,.2,1),opacity .15s' }}>
                     <div style={{ flex: p.by_channel.card, background: '#CFC6B8', borderRadius: '5px 5px 2px 2px' }} />
-                    <div style={{ flex: p.by_channel.emola, background: '#1A1410', borderRadius: 2 }} />
-                    <div style={{ flex: p.by_channel.mpesa, background: '#D14400', borderRadius: '2px 2px 4px 4px' }} />
+                    <div style={{ flex: p.by_channel.emola, background: '#F7871F', borderRadius: 2 }} />
+                    <div style={{ flex: p.by_channel.mpesa, background: '#E60000', borderRadius: '2px 2px 4px 4px' }} />
                   </div>
                 </div>
               ))}

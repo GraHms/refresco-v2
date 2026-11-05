@@ -4,8 +4,8 @@ import { ArrowRight, ChartColumn, ChevronDown, Check, CircleAlert, CircleCheck, 
 import { api } from '../lib/api';
 import { digits, fmt, fmtPhone, walletOf } from '../lib/format';
 import { useSession } from '../lib/session';
-import { SUPPORT_PHONE, SUPPORT_TEL } from '../lib/support';
-import { Brand, Logo } from '../components/ui';
+import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '../lib/support';
+import { Brand, Logo, PoweredByRiha } from '../components/ui';
 import { homeFor } from './Auth';
 import './landing.css';
 
@@ -368,10 +368,10 @@ function Pricing() {
         <div className="lp-price-list">
           <b className="lp-price-head">Tudo incluído</b>
           <Tick>Página com o teu link {DOMAIN}</Tick>
-          <Tick>{nb('Pagamentos por M-Pesa, com e-Mola e cartão em breve')}</Tick>
+          <Tick>{nb('Pagamentos por M-Pesa e e-Mola, com cartão em breve')}</Tick>
           <Tick>Divisão automática para grupos</Tick>
           <Tick>Painel com mensagens, contactos e relatórios</Tick>
-          <Tick>Ajuda em português: <a href={SUPPORT_TEL} className="lp-tel">{SUPPORT_PHONE}</a></Tick>
+          <Tick>Ajuda em português: <a href={SUPPORT_MAILTO} className="lp-tel">{SUPPORT_EMAIL}</a></Tick>
           <Link to="/registar" className="lp-btn lp-btn-primary lp-price-go">Criar a minha página<ArrowRight size={18} /></Link>
         </div>
       </div>
@@ -465,9 +465,9 @@ export default function Landing() {
         <div className="lp-footer-brand"><Logo h={40} /><span>Feito em Maputo para quem cria em Moçambique.</span></div>
         <div className="lp-footer-cols">
           <div><span className="mono">Produto</span><a href="#como-funciona">Como funciona</a><a href="#grupos">Grupos</a><a href="#precos">Preços</a></div>
-          <div><span className="mono">Conta</span><Link to="/entrar">Entrar</Link><Link to="/registar">Criar página</Link><a href={SUPPORT_TEL}>Ajuda: {SUPPORT_PHONE}</a></div>
+          <div><span className="mono">Conta</span><Link to="/entrar">Entrar</Link><Link to="/registar">Criar página</Link><a href={SUPPORT_MAILTO}>Ajuda: {SUPPORT_EMAIL}</a></div>
         </div>
-        <div className="lp-footer-end"><span>© 2026 Refres, Lda · Maputo, Moçambique</span><span className="mono">{DOMAIN}</span></div>
+        <div className="lp-footer-end"><span>© 2026 Refresco, um produto RIHA · Maputo, Moçambique</span><PoweredByRiha /><span className="mono">{DOMAIN}</span></div>
       </footer>
     </div>
   );

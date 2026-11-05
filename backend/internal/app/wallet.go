@@ -237,7 +237,7 @@ func (a *App) AddPayoutAccount(ctx context.Context, c *Creator, in PayoutAccount
 	case d.PayoutNIB:
 		label = p.BankName + " NIB terminado em " + p.Number[len(p.Number)-5:]
 	}
-	notice := "Refresco: foi adicionada a conta de levantamento " + label + " a " + c.Account.Name + ". Se não foste tu, muda a palavra-passe e liga para +258 84 825 5237."
+	notice := "Refresco: foi adicionada a conta de levantamento " + label + " a " + c.Account.Name + ". Se não foste tu, muda a palavra-passe e escreve para support@rihagateway.com."
 	a.notify(ctx, ports.Message{To: d.FormatMZPhone(c.Member.WalletNumber), Kind: "payout_account_added", Body: notice})
 	if c.User.Email != "" {
 		a.notify(ctx, ports.Message{To: c.User.Email, Kind: "payout_account_added", Body: notice})

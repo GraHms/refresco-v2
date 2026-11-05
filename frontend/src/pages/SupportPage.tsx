@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { SUPPORT_PHONE, SUPPORT_TEL } from '../lib/support';
+import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '../lib/support';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowUpRight, Check, ChevronDown, CircleAlert, CircleCheck, CreditCard, Info, Landmark, Lock, RotateCw } from 'lucide-react';
 import { api, ApiError, Channel, Page, SupportStatus } from '../lib/api';
 import { dateTime, digits, fmt, fmtPhone, luhn, mtN, uid, walletOf } from '../lib/format';
-import { Brand, BrandName, Logo, SOCIALS } from '../components/ui';
+import { Brand, BrandName, Logo, PoweredByRiha, SOCIALS, WalletLogo } from '../components/ui';
 
 const NETS: [string, string, BrandName][] = [['x', 'X', 'x'], ['instagram', 'Instagram', 'instagram'], ['tiktok', 'TikTok', 'tiktok'], ['facebook', 'Facebook', 'facebook'], ['youtube', 'YouTube', 'youtube']];
 const CHN = { mpesa: 'M-Pesa', emola: 'e-Mola' } as const;
@@ -39,8 +39,8 @@ export default function SupportPage() {
           <Profile page={page} />
           <SupportCard page={page} />
         </>}
-        <footer style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 12.5, color: '#6E6861' }}>Pagamento seguro com<Logo h={18} /></footer>
-        <div style={{ textAlign: 'center', marginTop: -14, fontSize: 12.5, color: '#6E6861' }}>Precisas de ajuda? <a href={SUPPORT_TEL} style={{ color: 'inherit', fontWeight: 600 }}>{SUPPORT_PHONE}</a></div>
+        <footer style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}><PoweredByRiha /></footer>
+        <div style={{ textAlign: 'center', marginTop: -14, fontSize: 12.5, color: '#6E6861' }}>Precisas de ajuda? <a href={SUPPORT_MAILTO} style={{ color: 'inherit', fontWeight: 600 }}>{SUPPORT_EMAIL}</a></div>
       </main>
     </div>
   );
@@ -287,20 +287,20 @@ function SupportCard({ page }: { page: Page }) {
             <div style={{ display: 'grid', gridTemplateColumns: `repeat(${methods.length + soon.length},minmax(0,1fr))`, gap: 8 }}>
               {methods.map(k => {
                 const on = method === k;
-                const [label, letter, bb, bf] = ({ mpesa: ['M-Pesa', 'M', '#D14400', '#fff'], emola: ['e-Mola', 'e', '#1A1410', '#fff'], card: ['Cartão', '', '#ECE6DB', '#1A1410'] } as const)[k];
+                const label = ({ mpesa: 'M-Pesa', emola: 'e-Mola', card: 'Cartão' } as const)[k];
                 return (
                   <button key={k} type="button" onClick={() => { setMethod(k); setTried(false); }} aria-pressed={on}
                     style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, height: 72, borderRadius: 16, border: `1.5px solid ${on ? '#D14400' : '#E4DDD1'}`, background: on ? '#FFF4EC' : '#fff', transition: 'border-color .2s,background-color .2s' }}>
-                    <span className="display" style={{ width: 30, height: 30, borderRadius: 9, background: bb, color: bf, display: 'grid', placeItems: 'center', fontWeight: 900, fontSize: 13 }}>{letter}{k === 'card' && <CreditCard size={15} />}</span>
+                    {k === 'card' ? <span style={{ width: 30, height: 30, borderRadius: 9, background: '#ECE6DB', color: '#1A1410', display: 'grid', placeItems: 'center' }}><CreditCard size={15} /></span> : <WalletLogo wallet={k} />}
                     <span style={{ fontSize: 13, fontWeight: 600 }}>{label}</span>
                   </button>
                 );
               })}
               {soon.map(k => {
-                const [label, letter, bb, bf] = ({ mpesa: ['M-Pesa', 'M', '#D14400', '#fff'], emola: ['e-Mola', 'e', '#1A1410', '#fff'], card: ['Cartão', '', '#ECE6DB', '#1A1410'] } as const)[k];
+                const label = ({ mpesa: 'M-Pesa', emola: 'e-Mola', card: 'Cartão' } as const)[k];
                 return (
                   <div key={k} aria-disabled="true" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, height: 72, borderRadius: 16, border: '1.5px dashed #E4DDD1', background: '#FBF7F1', color: '#6E6861' }}>
-                    <span className="display" style={{ width: 24, height: 24, borderRadius: 7, background: bb, color: bf, opacity: 0.45, display: 'grid', placeItems: 'center', fontWeight: 900, fontSize: 11 }}>{letter}{k === 'card' && <CreditCard size={13} />}</span>
+                    {k === 'card' ? <span style={{ width: 24, height: 24, borderRadius: 7, background: '#ECE6DB', color: '#1A1410', opacity: 0.45, display: 'grid', placeItems: 'center' }}><CreditCard size={13} /></span> : <WalletLogo wallet={k} size={24} radius={7} style={{ opacity: 0.45 }} />}
                     <span style={{ fontSize: 12, fontWeight: 600 }}>{label}</span>
                     <span style={{ fontSize: 10.5, fontWeight: 600, color: '#A83700' }}>Em breve</span>
                   </div>
@@ -391,7 +391,7 @@ function SupportCard({ page }: { page: Page }) {
               <span style={{ flex: 1, borderRadius: 21, background: '#2E2721', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 9 }}>
                 <span style={{ background: '#fff', borderRadius: 12, padding: 10, textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 7 }}>
                   <span className="mono" style={{ fontSize: 9.5, letterSpacing: '.06em', color: '#6E6861', textTransform: 'uppercase' }}>{CHN[sup.channel as 'mpesa']}</span>
-                  <span style={{ fontSize: 10.5, lineHeight: 1.35 }}>Pagar <b>{mtN(sup.amount, 2)} MT</b> a REFRES*{page.name.toUpperCase()}. Insere o PIN:</span>
+                  <span style={{ fontSize: 10.5, lineHeight: 1.35 }}>{sup.channel === 'mpesa' ? <>Vais pagar <b>{mtN(sup.amount, 2)} MT</b> na Entidade BIM PAY IZI. Digita o teu PIN</> : <>Confirma o pagamento de <b>{mtN(sup.amount, 2)} MT</b> no telemóvel.</>}</span>
                   <span className="mono" style={{ height: 22, borderRadius: 6, border: '1px solid #D9D1C4', display: 'flex', alignItems: 'center', padding: '0 7px', letterSpacing: '.3em', fontSize: 11 }}>••••</span>
                 </span>
               </span>
@@ -401,7 +401,7 @@ function SupportCard({ page }: { page: Page }) {
             <div className="display" style={{ fontWeight: 700, fontSize: 22, lineHeight: 1.12, letterSpacing: '-0.025em' }}>{failed ? 'O pagamento não foi concluído' : 'Confirma no teu telemóvel'}</div>
             <p style={{ margin: '8px auto 0', maxWidth: 320, fontSize: 14.5, color: '#57524B' }}>
               {failed ? <>{sup.fail_reason || 'O pedido expirou'}. Podes reenviar o pedido ou voltar.</> :
-                <>Enviámos um pedido de <b style={{ color: '#1A1410' }}>{mtN(sup.amount)} MT</b> para <span className="mono" style={{ color: '#1A1410', whiteSpace: 'nowrap' }}>+258 {fmtPhone(phone)}</span>. Insere o teu PIN {CHN[sup.channel as 'mpesa']}.</>}
+                <>O pedido de <b style={{ color: '#1A1410' }}>{mtN(sup.amount)} MT</b> para <span className="mono" style={{ color: '#1A1410', whiteSpace: 'nowrap' }}>+258 {fmtPhone(phone)}</span> pode demorar até um minuto a chegar. {sup.channel === 'mpesa' ? <>Aparece em nome de <b style={{ color: '#1A1410' }}>BIM PAY IZI</b>. Insere o teu PIN M-Pesa.</> : <>Segue as instruções de {CHN[sup.channel as 'emola']} no telemóvel. A internet pode falhar enquanto o pedido está aberto: mostramos o resultado assim que voltar.</>}</>}
             </p>
           </div>
           {reconnecting && <div role="status" style={{ width: '100%', padding: '11px 14px', borderRadius: 12, background: '#FBEFD9', color: '#5B4600', fontSize: 13.5, lineHeight: 1.45 }}>O M-Pesa pode cortar a internet enquanto o pedido está aberto. Não precisas de fazer nada: o pagamento continua e atualizamos assim que a ligação voltar.</div>}

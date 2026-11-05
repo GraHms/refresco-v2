@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { CircleCheck, CircleAlert, X } from 'lucide-react';
 import { siFacebook, siInstagram, siMastercard, siSpotify, siTiktok, siVisa, siWhatsapp, siX, siYoutube } from 'simple-icons';
@@ -135,4 +136,17 @@ export function useMedia(q: string) {
 
 export async function copy(text: string) {
   try { await navigator.clipboard.writeText(text); } catch { /* clipboard unavailable */ }
+}
+
+// The wallets' real logos, as they appear on the customer's phone.
+export function WalletLogo({ wallet, size = 30, radius = 9, style }: { wallet: 'mpesa' | 'emola'; size?: number; radius?: number; style?: CSSProperties }) {
+  return <img src={`/assets/methods/${wallet}.png`} alt={wallet === 'mpesa' ? 'M-Pesa' : 'e-Mola'} width={size} height={size} style={{ display: 'block', flex: 'none', width: size, height: size, borderRadius: radius, objectFit: 'cover', ...style }} />;
+}
+
+export function PoweredByRiha({ style }: { style?: CSSProperties }) {
+  return (
+    <a href="https://rihagateway.com" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: '#6E6861', textDecoration: 'none', ...style }}>
+      Powered by<img src="/assets/riha-icon-dark.png" alt="" width={15} height={15} style={{ display: 'block' }} /><b style={{ color: '#1A1410', letterSpacing: '.14em', fontSize: 11.5 }}>RIHA</b>
+    </a>
+  );
 }

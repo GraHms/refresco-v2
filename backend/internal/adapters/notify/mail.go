@@ -169,7 +169,7 @@ func copyFor(kind string) mailCopy {
 
 const (
 	mailFooter = "Refresco, um produto RIHA"
-	mailAuto   = "Este é um email automático. Para ajuda, liga para +258 84 825 5237."
+	mailAuto   = "Este é um email automático. Para ajuda, escreve para support@rihagateway.com."
 )
 
 func buildMail(from string, to *mail.Address, m ports.Message) ([]byte, error) {

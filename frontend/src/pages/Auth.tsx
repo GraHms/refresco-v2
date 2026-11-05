@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { SUPPORT_PHONE, SUPPORT_TEL } from '../lib/support';
+import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '../lib/support';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Check, CircleAlert, CircleCheck, Eye, EyeOff, Info, Link as LinkIcon, PartyPopper, ShieldCheck, Ticket } from 'lucide-react';
 import { api, ApiError, Me } from '../lib/api';
@@ -45,7 +45,7 @@ export default function Auth() {
                 screen === 'register' ? <Register pw={pw} onCreated={setCreated} /> : <Forgot pw={pw} />}
           </div>
         </div>
-        <div style={{ textAlign: 'center', fontSize: 12.5, color: '#6E6861' }}>© 2026 Refres, Lda · Maputo · Ajuda: <a href={SUPPORT_TEL} style={{ color: 'inherit' }}>{SUPPORT_PHONE}</a></div>
+        <div style={{ textAlign: 'center', fontSize: 12.5, color: '#6E6861' }}>© 2026 Refresco, um produto RIHA · Maputo · Ajuda: <a href={SUPPORT_MAILTO} style={{ color: 'inherit' }}>{SUPPORT_EMAIL}</a></div>
       </main>
     </div>
   );

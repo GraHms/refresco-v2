@@ -52,7 +52,7 @@ func (s *Server) metaFor(c context.Context, path string, q func(string) string) 
 		return pageMeta{title: siteTitle, desc: siteDesc, image: "/og/site.png", alt: siteTitle, path: "/", index: true,
 			ld: []any{
 				map[string]any{"@context": "https://schema.org", "@type": "Organization", "name": siteName, "url": s.url("/"), "logo": s.url("/assets/refres-logo-orange.png"),
-					"contactPoint": map[string]any{"@type": "ContactPoint", "telephone": "+258848255237", "contactType": "customer support", "areaServed": "MZ", "availableLanguage": "Portuguese"}},
+					"contactPoint": map[string]any{"@type": "ContactPoint", "email": "support@rihagateway.com", "contactType": "customer support", "areaServed": "MZ", "availableLanguage": "Portuguese"}},
 				map[string]any{"@context": "https://schema.org", "@type": "WebSite", "name": siteName, "url": s.url("/"), "inLanguage": "pt-MZ"},
 			},
 			noscript: `<h1>Recebe apoios dos teus fãs por M-Pesa</h1><p>` + html.EscapeString(siteDesc) + `</p><p><a href="/registar">Criar a minha página</a></p>`}

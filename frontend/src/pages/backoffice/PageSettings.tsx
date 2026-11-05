@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowUpRight, ChevronDown, CircleAlert, CircleCheck, CreditCard, Eye, Link as LinkIcon, Smartphone, X } from 'lucide-react';
+import { ArrowUpRight, ChevronDown, CircleAlert, CircleCheck, CreditCard, Eye, Link as LinkIcon, X } from 'lucide-react';
 import { api, ApiError, Page } from '../../lib/api';
 import { CH, fmt, mtN } from '../../lib/format';
 import { useSession } from '../../lib/session';
-import { Brand, Logo, SOCIALS, Toggle, useToast } from '../../components/ui';
+import { Brand, Logo, SOCIALS, Toggle, useToast, WalletLogo } from '../../components/ui';
 import { PageHead, useBo } from './Layout';
 
 interface Resp { page: Page; categories: string[]; can_edit: boolean }
@@ -132,7 +132,7 @@ export default function PageSettings() {
             <div style={{ marginBottom: 6 }}>{head('Formas de pagamento', 'Como os fãs podem pagar.')}</div>
             {(['mpesa', 'emola', 'card'] as const).map(k => (
               <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 0', borderTop: '1px solid #F0EBE3' }}>
-                <span style={{ flex: 'none', width: 40, height: 40, borderRadius: 12, background: k === 'mpesa' ? '#D14400' : k === 'emola' ? '#1A1410' : '#ECE6DB', color: k === 'card' ? '#1A1410' : '#fff', display: 'grid', placeItems: 'center' }}>{k === 'card' ? <CreditCard size={18} /> : <Smartphone size={18} />}</span>
+                {k === 'card' ? <span style={{ flex: 'none', width: 40, height: 40, borderRadius: 12, background: '#ECE6DB', color: '#1A1410', display: 'grid', placeItems: 'center' }}><CreditCard size={18} /></span> : <WalletLogo wallet={k} size={40} radius={12} />}
                 <span style={{ flex: 1, minWidth: 0, lineHeight: 1.35 }}>
                   <span style={{ display: 'block', fontWeight: 600 }}>{k === 'card' ? 'Cartão bancário' : CH[k].name}</span>
                   <span style={{ display: 'block', fontSize: 13, color: '#6E6861' }}>{k === 'mpesa' ? 'Fãs Vodacom confirmam com o PIN M-Pesa' : k === 'emola' ? 'Fãs Movitel confirmam com o PIN e-Mola' : 'Visa e Mastercard, com confirmação do banco'}</span>

@@ -134,7 +134,7 @@ func TestMailSendsAndRoutes(t *testing.T) {
 	if m.Header.Get("From") != "Refresco <no-reply@rihagateway.com>" || !strings.Contains(m.Header.Get("To"), "a@b.co.mz") {
 		t.Fatalf("headers: %v", m.Header)
 	}
-	if !strings.Contains(parts["text/plain"], "+258 84 825 5237") || !strings.Contains(parts["text/html"], "258 84 825 5237") {
+	if !strings.Contains(parts["text/plain"], "support@rihagateway.com") || !strings.Contains(parts["text/html"], "support@rihagateway.com") {
 		t.Fatalf("no help line: %v", parts)
 	}
 	if !strings.Contains(parts["text/plain"], "123456") || !strings.Contains(parts["text/html"], ">123456</td>") {

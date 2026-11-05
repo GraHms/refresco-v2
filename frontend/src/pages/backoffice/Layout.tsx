@@ -3,7 +3,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import { ArrowUpRight, ChevronsUpDown, Copy, Inbox, LayoutDashboard, Link as LinkIcon, LogOut, PanelsTopLeft, UsersRound, Wallet } from 'lucide-react';
 import { api, Me } from '../../lib/api';
 import { ini } from '../../lib/format';
-import { SUPPORT_PHONE } from '../../lib/support';
+import { SUPPORT_EMAIL } from '../../lib/support';
 import { useSession } from '../../lib/session';
 import { copy, Logo, useMedia, useToast } from '../../components/ui';
 
@@ -96,7 +96,7 @@ export default function BackofficeLayout() {
             <div style={{ maxWidth: 1180, margin: '0 auto' }}>
               {me.sandbox && <Notice>Modo de teste: os pagamentos são simulados e o saldo não é dinheiro real.</Notice>}
               {me.account_status === 'pending' && !loc.pathname.endsWith('/pagina') && <Notice>A tua conta está por verificar. Já podes receber apoios; os levantamentos são aprovados depois da verificação.</Notice>}
-              {me.account_status === 'suspended' && <Notice red>A tua conta está suspensa. A página não recebe apoios. Fala com a equipa Refresco: {SUPPORT_PHONE}.</Notice>}
+              {me.account_status === 'suspended' && <Notice red>A tua conta está suspensa. A página não recebe apoios. Fala com a equipa Refresco: {SUPPORT_EMAIL}.</Notice>}
               <Outlet />
             </div>
           </main>
