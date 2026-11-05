@@ -3,6 +3,7 @@ package bootstrap
 import (
 	"context"
 	"log/slog"
+	"strings"
 	"time"
 	_ "time/tzdata"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/refresco/refresco-v2/backend/internal/adapters/notify"
 	"github.com/refresco/refresco-v2/backend/internal/adapters/payments/mock"
 	"github.com/refresco/refresco-v2/backend/internal/adapters/payments/mpesa"
+	"github.com/refresco/refresco-v2/backend/internal/adapters/payments/mtoca"
 	"github.com/refresco/refresco-v2/backend/internal/adapters/pdf"
 	"github.com/refresco/refresco-v2/backend/internal/adapters/postgres"
 	"github.com/refresco/refresco-v2/backend/internal/adapters/security"
@@ -39,6 +41,13 @@ func Build(cfg config.Config, log *slog.Logger) (*app.App, *gorm.DB, error) {
 	if cfg.PaymentsProvider == "mpesa" {
 		g, err := mpesa.New(mpesa.Config{BaseURL: cfg.MpesaBaseURL, C2BPort: cfg.MpesaC2BPort, QueryPort: cfg.MpesaQueryPort, APIKey: cfg.MpesaAPIKey,
 			PublicKey: cfg.MpesaPublicKey, ServiceProviderCode: cfg.MpesaProviderCode, Log: log})
+		if err != nil {
+			return nil, nil, err
+		}
+		payments = g
+	}
+	if cfg.PaymentsProvider == "mtoca" {
+		g, err := mtoca.New(mtoca.Config{BaseURL: cfg.MtocaURL, CallbackURL: strings.TrimRight(cfg.PublicURL, "/") + "/api/v1/webhooks/payments", Log: log})
 		if err != nil {
 			return nil, nil, err
 		}

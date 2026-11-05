@@ -55,6 +55,27 @@ func TestDevSecretsAreRandom(t *testing.T) {
 	}
 }
 
+func TestMtocaTakesTheWalletsAndWantsAPrivateAddress(t *testing.T) {
+	secret := "0123456789abcdef0123456789abcdef"
+	setEnv(t, map[string]string{"APP_ENV": "production", "JWT_SECRET": secret, "APP_SECRET": secret, "PAYMENTS_PROVIDER": "mtoca", "MTOCA_URL": "", "DATABASE_URL": "postgres://u:p@db/x", "PUBLIC_URL": "https://pagarefresco.com"})
+	if _, err := Load(); err == nil {
+		t.Fatal("no address must refuse to start")
+	}
+	t.Setenv("MTOCA_URL", "http://mtoca:8080")
+	c, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.ComingSoon.Emola || !c.ComingSoon.Card || c.ComingSoon.Mpesa || c.Sandbox {
+		t.Fatalf("coming soon %+v, sandbox %v", c.ComingSoon, c.Sandbox)
+	}
+	for raw, want := range map[string]bool{"http://mtoca:8080": true, "http://172.30.5.2:8080": true, "https://api.example.com": true, "http://api.example.com": false, "http://1.1.1.1:8080": false} {
+		if got := checkMtocaURL(raw, true) == nil; got != want {
+			t.Errorf("%s: allowed %v", raw, got)
+		}
+	}
+}
+
 func TestMpesaNeedsItsKeysAndKeepsTheRestComingSoon(t *testing.T) {
 	setEnv(t, map[string]string{"APP_ENV": "production", "JWT_SECRET": strong, "APP_SECRET": strong, "COOKIE_SECURE": "true", "PAYMENTS_PROVIDER": "mpesa"})
 	if _, err := Load(); err == nil || !strings.Contains(err.Error(), "MPESA_API_KEY") {

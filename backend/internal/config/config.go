@@ -4,6 +4,8 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"net"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -43,6 +45,7 @@ type Config struct {
 	MpesaAPIKey       string
 	MpesaPublicKey    string
 	MpesaProviderCode string
+	MtocaURL          string
 	// ComingSoon is what can't be used yet, for payments and payouts.
 	ComingSoon domain.ChannelSet
 }
@@ -91,6 +94,7 @@ func Load() (Config, error) {
 		MpesaAPIKey:       env("MPESA_API_KEY", ""),
 		MpesaPublicKey:    env("MPESA_PUBLIC_KEY", ""),
 		MpesaProviderCode: env("MPESA_SERVICE_PROVIDER_CODE", ""),
+		MtocaURL:          env("MTOCA_URL", ""),
 	}
 	if c.Env != "production" && c.Env != "development" {
 		return c, errors.New("APP_ENV must be production or development")
@@ -144,10 +148,35 @@ func Load() (Config, error) {
 			return c, errors.New("PAYMENTS_PROVIDER=mpesa needs MPESA_API_KEY, MPESA_PUBLIC_KEY and MPESA_SERVICE_PROVIDER_CODE")
 		}
 		c.ComingSoon = domain.ChannelSet{Emola: true, Card: true}
+	case "mtoca":
+		if err := checkMtocaURL(c.MtocaURL, c.Production()); err != nil {
+			return c, err
+		}
+		c.ComingSoon = domain.ChannelSet{Card: true}
 	default:
 		return c, errors.New("unsupported PAYMENTS_PROVIDER: " + c.PaymentsProvider)
 	}
 	return c, nil
+}
+
+// checkMtocaURL allows plain http only on a private network, where mtoca has to be
+// anyway because it has no login.
+func checkMtocaURL(raw string, production bool) error {
+	u, err := url.Parse(raw)
+	if raw == "" || err != nil || u.Hostname() == "" {
+		return errors.New("PAYMENTS_PROVIDER=mtoca needs MTOCA_URL")
+	}
+	if !production || u.Scheme == "https" {
+		return nil
+	}
+	if ip := net.ParseIP(u.Hostname()); ip != nil {
+		if ip.IsPrivate() || ip.IsLoopback() {
+			return nil
+		}
+	} else if !strings.Contains(u.Hostname(), ".") {
+		return nil
+	}
+	return errors.New("MTOCA_URL must use https, unless it is on a private network")
 }
 
 func randomSecret() []byte {
