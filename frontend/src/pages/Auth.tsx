@@ -247,8 +247,8 @@ function Created({ handle }: { handle: string }) {
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 18 }}>
       <span style={{ width: 72, height: 72, borderRadius: 24, background: '#D14400', color: '#fff', display: 'grid', placeItems: 'center' }}><PartyPopper size={32} /></span>
       <div><h2 style={{ ...h2, fontSize: 30 }}>Conta criada!</h2><p style={{ margin: '10px 0 0', color: '#57524B' }}>A tua página já existe. Antes do primeiro levantamento, a equipa Refresco vai verificar a tua conta.</p></div>
-      <div style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderRadius: 16, background: '#fff', border: '1px solid #E4DDD1' }}>
-        <LinkIcon size={16} color="#6E6861" /><span className="mono" style={{ flex: 1, textAlign: 'left', fontSize: 14 }}>pagarefresco.com/{handle}</span>
+      <div style={{ width: '100%', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, rowGap: 8, padding: '14px 16px', borderRadius: 16, background: '#fff', border: '1px solid #E4DDD1' }}>
+        <LinkIcon size={16} color="#6E6861" /><span className="mono" style={{ flex: '1 1 auto', minWidth: 0, overflowWrap: 'anywhere', textAlign: 'left', fontSize: 14 }}>pagarefresco.com/{handle}</span>
         <span style={{ height: 24, padding: '0 8px', borderRadius: 7, background: '#E3F3E8', color: '#17803D', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center' }}>Ativa</span>
       </div>
       <Link to="/painel/pagina" className="btn btn-primary" style={{ ...primary, width: '100%' }}>Configurar a minha página<ArrowRight size={17} /></Link>
