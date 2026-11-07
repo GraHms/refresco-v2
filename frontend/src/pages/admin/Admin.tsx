@@ -91,7 +91,7 @@ export function AdminHome() {
       <div style={{ ...card(false), flex: '2 1 520px', minWidth: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
           <div><div style={{ fontSize: 13.5, color: '#57524B' }}>{hp ? bucketLabel(hp.start, false, false) : 'Receita refres por dia'}</div><div className="display" style={{ fontWeight: 800, fontSize: 24, letterSpacing: '-0.03em' }}>{hp ? `${mt(hp.fee)} de ${mt(hp.total)}` : d ? `${mt(d.revenue)} em 30 dias` : '—'}</div></div>
-          <div style={{ display: 'flex', gap: 14, fontSize: 12.5, color: '#57524B' }}><span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 10, height: 10, borderRadius: 3, background: '#D14400' }} />Receita refres</span><span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 10, height: 10, borderRadius: 3, background: '#ECE6DB' }} />Volume</span></div>
+          <div style={{ display: 'flex', gap: 14, fontSize: 12.5, color: '#57524B' }}><span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 10, height: 10, borderRadius: 3, background: '#D14400' }} />Receita Refresco</span><span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 10, height: 10, borderRadius: 3, background: '#ECE6DB' }} />Volume</span></div>
         </div>
         <div onMouseLeave={() => setHot(null)} style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 200, borderBottom: '1px solid #E4DDD1' }} role="img" aria-label="Receita e volume por dia">
           {pts.map((p, i) => (

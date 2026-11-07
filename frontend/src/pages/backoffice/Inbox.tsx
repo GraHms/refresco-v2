@@ -197,7 +197,7 @@ function Detail({ id, onClose, onChanged }: { id: string; onClose: () => void; o
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '10px 14px' }}><span style={{ color: '#6E6861' }}>Referência</span><span className="mono">{s.ref}</span></div>
             {row('Meio', s.card || `${CH[s.channel].name} · ${s.contact.replace('+258 ', '')}`)}
             {row('Valor pago', mt(s.amount, 2))}
-            {s.status === 'confirmed' && <>{row(`Taxa refres (${pct(s.fee_bps)})`, '−' + mt(s.fee, 2))}{row('Líquido para o grupo', mt(s.net_amount, 2), true)}</>}
+            {s.status === 'confirmed' && <>{row(`Taxa Refresco (${pct(s.fee_bps)})`, '−' + mt(s.fee, 2))}{row('Líquido para o grupo', mt(s.net_amount, 2), true)}</>}
           </div>
         </div>
         {s.splits && s.splits.length > 0 && (

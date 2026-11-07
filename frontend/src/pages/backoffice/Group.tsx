@@ -126,7 +126,7 @@ export default function Group() {
             {[100, 300, 500, 1000].map(v => <button key={v} onClick={() => setSim(v)} className="display" style={{ height: 40, borderRadius: 11, border: `1px solid ${sim === v ? '#F6EFE6' : '#3A3531'}`, background: sim === v ? '#F6EFE6' : 'transparent', color: sim === v ? '#1A1410' : '#F6EFE6', fontWeight: 700, fontSize: 13.5 }}>{fmt(v)}</button>)}
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}><span style={{ color: '#A39C92' }}>Valor pago</span><span className="display" style={{ fontWeight: 800, fontSize: 26, letterSpacing: '-0.03em' }}>{fmt(sim)} MT</span></div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#A39C92' }}><span>Taxa refres ({fmtPct(g.fee_bps)})</span><span className="mono">−{fmt(sim * fee, 2)} MT</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#A39C92' }}><span>Taxa Refresco ({fmtPct(g.fee_bps)})</span><span className="mono">−{fmt(sim * fee, 2)} MT</span></div>
           <div>
             {members.map((m, i) => (
               <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 0', borderTop: '1px solid #2E2A26' }}>
