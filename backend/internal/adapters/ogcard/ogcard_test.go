@@ -44,3 +44,16 @@ func TestCleanKeepsPortuguese(t *testing.T) {
 		t.Fatalf("%q", got)
 	}
 }
+
+func TestTheCallToActStaysWhole(t *testing.T) {
+	size, line := fitLine(displayFont, "Para criadores de Moçambique", []float64{46, 42, 38, 34})
+	if line != "Para criadores de Moçambique" {
+		t.Fatalf("shortened to %q", line)
+	}
+	if size < 34 || size > 46 {
+		t.Fatalf("size %v", size)
+	}
+	if _, line := fitLine(displayFont, strings.Repeat("Muito comprido ", 20), []float64{46, 34}); !strings.HasSuffix(line, "…") {
+		t.Fatalf("an overlong line must be shortened, got %q", line)
+	}
+}

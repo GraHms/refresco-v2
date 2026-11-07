@@ -100,7 +100,8 @@ func Render(c Card) ([]byte, error) {
 		y = text(img, bodyFont, 34, muted, c.Body, y+58, 2, 1.28)
 	}
 	if c.Big != "" {
-		text(img, displayFont, 46, brand, c.Big, Height-110, 1, 1)
+		size, line := fitLine(displayFont, c.Big, []float64{46, 42, 38, 34})
+		textLines(img, displayFont, size, brand, []string{line}, Height-110, 1)
 	}
 	if c.Foot != "" {
 		text(img, bodyFont, 30, muted, c.Foot, Height-56, 1, 1)
@@ -132,6 +133,19 @@ func fit(f *opentype.Font, s string, sizes []float64) (float64, []string) {
 	}
 	size := sizes[len(sizes)-1]
 	return size, limit(face(f, size), wrap(face(f, size), s, textWidth), 2)
+}
+
+// fitLine keeps a one line text whole by trying smaller sizes, and only
+// shortens it when even the smallest size is too wide.
+func fitLine(f *opentype.Font, s string, sizes []float64) (float64, string) {
+	s = strings.Join(strings.Fields(clean(f, s)), " ")
+	for _, size := range sizes {
+		if font.MeasureString(face(f, size), s).Ceil() <= textWidth {
+			return size, s
+		}
+	}
+	size := sizes[len(sizes)-1]
+	return size, shorten(face(f, size), s, textWidth)
 }
 
 func text(img *image.RGBA, f *opentype.Font, size float64, c color.RGBA, s string, y, maxLines int, leading float64) int {
